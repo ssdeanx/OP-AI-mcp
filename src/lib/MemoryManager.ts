@@ -2,9 +2,20 @@
 // Replaces JSON file storage with proper database
 
 import Database from 'better-sqlite3';
-import path from 'path';
-import { promises as fs } from 'fs';
+import path from 'node:path';
+import { mkdirSync, readFileSync, renameSync } from 'fs';
 import { MemoryRelation, MemoryGraph, MemoryGraphNode } from '../types/tool.js';
+
+type SqlParam = string | number | null;
+
+type MemoryRelationRow = {
+  sourceKey: string;
+  targetKey: string;
+  relationType: string;
+  strength: number;
+  metadata: string | null;
+  timestamp: string;
+};
 
 export interface MemoryItem {
   key: string;
@@ -33,7 +44,7 @@ export class MemoryManager {
 
       // Ensure directory exists synchronously (needed for DB init)
       try {
-        require('fs').mkdirSync(memoryDir, { recursive: true });
+        mkdirSync(memoryDir, { recursive: true });
       } catch (error) {
         const nodeError = error as NodeJS.ErrnoException;
         if (nodeError.code !== 'EEXIST') {
@@ -175,9 +186,9 @@ export class MemoryManager {
    */
   private loadJSONMemories(jsonPath: string): MemoryItem[] {
     try {
-      const jsonData = require('fs').readFileSync(jsonPath, 'utf-8');
+      const jsonData = readFileSync(jsonPath, 'utf-8');
       return JSON.parse(jsonData);
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -211,10 +222,11 @@ export class MemoryManager {
    * Backup JSON file and log migration
    */
   private backupAndCleanup(jsonPath: string, count: number): void {
+    void count;
     try {
-      require('fs').renameSync(jsonPath, `${jsonPath}.backup`);
+      renameSync(jsonPath, `${jsonPath}.backup`);
       // Migration successful - could add logger here
-    } catch (error) {
+    } catch {
       // Backup failed but migration completed
     }
   }
@@ -426,7 +438,7 @@ export class MemoryManager {
       `);
       stmt.run(sourceKey, targetKey, relationType, strength, metadataJson, timestamp);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -448,9 +460,9 @@ export class MemoryManager {
     }
 
     const stmt = this.db.prepare(sql);
-    const rows = direction === 'both'
-      ? stmt.all(key, key) as any[]
-      : stmt.all(key) as any[];
+    const rows = (direction === 'both'
+      ? stmt.all(key, key)
+      : stmt.all(key)) as MemoryRelationRow[];
 
     return rows.map(row => ({
       sourceKey: row.sourceKey,
@@ -667,7 +679,7 @@ export class MemoryManager {
    */
   public unlinkMemories(sourceKey: string, targetKey: string, relationType?: string): boolean {
     let sql = `DELETE FROM memory_relations WHERE sourceKey = ? AND targetKey = ?`;
-    const params: any[] = [sourceKey, targetKey];
+    const params: SqlParam[] = [sourceKey, targetKey];
 
     if (relationType) {
       sql += ` AND relationType = ?`;
@@ -686,7 +698,7 @@ export class MemoryManager {
    */
   public getTimeline(startDate?: string, endDate?: string, limit: number = 50): MemoryItem[] {
     let sql = `SELECT * FROM memories WHERE 1=1`;
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (startDate) {
       sql += ` AND timestamp >= ?`;
@@ -718,6 +730,7 @@ export class MemoryManager {
     } = {}
   ): MemoryItem[] {
     const { limit = 20, category, includeRelations = false, startKey, depth = 2 } = options;
+    void includeRelations;
 
     switch (strategy) {
       case 'keyword':
@@ -746,7 +759,7 @@ export class MemoryManager {
       SELECT * FROM memories
       WHERE (key LIKE ? OR value LIKE ?)
     `;
-    const params: any[] = [`%${query}%`, `%${query}%`];
+    const params: SqlParam[] = [`%${query}%`, `%${query}%`];
 
     if (category) {
       sql += ` AND category = ?`;
@@ -789,7 +802,7 @@ export class MemoryManager {
       FROM memories
       WHERE key LIKE ? OR value LIKE ?
     `;
-    const params: any[] = [`%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`];
+    const params: SqlParam[] = [`%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`];
 
     if (category) {
       sql += ` AND category = ?`;

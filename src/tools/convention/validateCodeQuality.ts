@@ -155,17 +155,14 @@ export async function validateCodeQuality(args: { code: string; type?: string; s
   }
   
   // Performance checks for React components
-  if (validateType === 'component' && validateCode.includes('React')) {
-    if (!validateCode.includes('memo') && !validateCode.includes('useMemo') && !validateCode.includes('useCallback')) {
-      qualityIssues.push({
-        type: 'performance',
-        severity: 'low',
-        message: 'Consider using React.memo, useMemo, or useCallback for performance optimization'
-      });
-      qualityScore.deductions.push({ reason: 'Missing performance optimization', points: 5 });
-    }
+  if (validateType === 'component' && validateCode.includes('React') && (!validateCode.includes('memo') && !validateCode.includes('useMemo') && !validateCode.includes('useCallback'))) {
+        qualityIssues.push({
+          type: 'performance',
+          severity: 'low',
+          message: 'Consider using React.memo, useMemo, or useCallback for performance optimization'
+        });
+        qualityScore.deductions.push({ reason: 'Missing performance optimization', points: 5 });
   }
-  
   const finalScore = Math.max(0, qualityScore.total - qualityScore.deductions.reduce((sum, d) => sum + d.points, 0));
   
   const validationResult = {

@@ -42,7 +42,7 @@ async function findGuide(name: string): Promise<CodingGuide | undefined> {
 
 export const getCodingGuideDefinition: ToolDefinition = {
   name: 'get_coding_guide',
-  description: '가이드|규칙|컨벤션|guide|rules|convention|standards|best practices - Get coding guide',
+  description: 'guide|rules|convention|standards|best practices - Get coding guide',
   inputSchema: {
     type: 'object',
     properties: {

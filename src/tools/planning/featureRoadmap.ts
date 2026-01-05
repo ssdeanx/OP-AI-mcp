@@ -25,7 +25,7 @@ interface RoadmapPhase {
 
 export const featureRoadmapDefinition: ToolDefinition = {
   name: 'feature_roadmap',
-  description: '로드맵|일정|계획표|roadmap|timeline|project plan|development schedule - Generate development roadmap',
+  description: 'roadmap|timeline|project plan|development schedule - Generate development roadmap',
   inputSchema: {
     type: 'object',
     properties: {

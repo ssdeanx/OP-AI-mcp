@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -18,11 +18,13 @@ import {
 // CORE IMPORTS
 // ============================================================================
 
-import { MemoryManager } from './lib/MemoryManager.js';
+import { z } from 'zod';
 
 // ============================================================================
-// TOOL IMPORTS - Organized by Category
+// CORE IMPORTS
 // ============================================================================
+
+import { MemoryManager } from './lib/MemoryManager.js';
 
 // Time Utils
 import { getCurrentTimeDefinition, getCurrentTime } from './tools/time/getCurrentTime.js';
@@ -150,76 +152,87 @@ const tools = [
 // TOOL HANDLER REGISTRY - Dynamic Dispatch Pattern (No Switch Statement)
 // ============================================================================
 
-type ToolHandler = (args: any) => Promise<CallToolResult>;
+type ToolHandler = (args: unknown) => Promise<CallToolResult>;
 
 const toolHandlers: Record<string, ToolHandler> = {
   // Time & UI
-  'get_current_time': getCurrentTime,
-  'preview_ui_ascii': previewUiAscii,
+  'get_current_time': (args) => getCurrentTime(args as Parameters<typeof getCurrentTime>[0]),
+  'preview_ui_ascii': (args) => previewUiAscii(args as Parameters<typeof previewUiAscii>[0]),
 
   // Memory - Basic
-  'save_memory': saveMemory,
-  'recall_memory': recallMemory,
-  'update_memory': updateMemory,
-  'delete_memory': deleteMemory,
-  'list_memories': listMemories,
-  'prioritize_memory': prioritizeMemory,
+  'save_memory': (args) => saveMemory(args as Parameters<typeof saveMemory>[0]),
+  'recall_memory': (args) => recallMemory(args as Parameters<typeof recallMemory>[0]),
+  'update_memory': (args) => updateMemory(args as Parameters<typeof updateMemory>[0]),
+  'delete_memory': (args) => deleteMemory(args as Parameters<typeof deleteMemory>[0]),
+  'list_memories': (args) => listMemories(args as Parameters<typeof listMemories>[0]),
+  'prioritize_memory': (args) => prioritizeMemory(args as Parameters<typeof prioritizeMemory>[0]),
 
   // Memory - Graph (v2.0 NEW)
-  'link_memories': linkMemories,
-  'get_memory_graph': getMemoryGraph,
-  'search_memories_advanced': searchMemoriesAdvanced,
-  'create_memory_timeline': createMemoryTimeline,
+  'link_memories': (args) => linkMemories(args as Parameters<typeof linkMemories>[0]),
+  'get_memory_graph': (args) => getMemoryGraph(args as Parameters<typeof getMemoryGraph>[0]),
+  'search_memories_advanced': (args) => searchMemoriesAdvanced(args as Parameters<typeof searchMemoriesAdvanced>[0]),
+  'create_memory_timeline': (args) => createMemoryTimeline(args as Parameters<typeof createMemoryTimeline>[0]),
 
   // Memory - Session Context (v2.1 NEW)
-  'get_session_context': getSessionContext,
+  'get_session_context': (args) => getSessionContext(args as Parameters<typeof getSessionContext>[0]),
 
   // Code Analysis
-  'find_symbol': findSymbol,
-  'find_references': findReferences,
-  'analyze_dependency_graph': analyzeDependencyGraph,
+  'find_symbol': (args) => findSymbol(args as Parameters<typeof findSymbol>[0]),
+  'find_references': (args) => findReferences(args as Parameters<typeof findReferences>[0]),
+  'analyze_dependency_graph': (args) => analyzeDependencyGraph(args as Parameters<typeof analyzeDependencyGraph>[0]),
 
   // Code Quality
-  'get_coding_guide': getCodingGuide,
-  'apply_quality_rules': applyQualityRules,
-  'validate_code_quality': validateCodeQuality,
-  'analyze_complexity': analyzeComplexity,
-  'check_coupling_cohesion': checkCouplingCohesion,
-  'suggest_improvements': suggestImprovements,
+  'get_coding_guide': (args) => getCodingGuide(args as Parameters<typeof getCodingGuide>[0]),
+  'apply_quality_rules': (args) => applyQualityRules(args as Parameters<typeof applyQualityRules>[0]),
+  'validate_code_quality': (args) => validateCodeQuality(args as Parameters<typeof validateCodeQuality>[0]),
+  'analyze_complexity': (args) => analyzeComplexity(args as Parameters<typeof analyzeComplexity>[0]),
+  'check_coupling_cohesion': (args) => checkCouplingCohesion(args as Parameters<typeof checkCouplingCohesion>[0]),
+  'suggest_improvements': (args) => suggestImprovements(args as Parameters<typeof suggestImprovements>[0]),
 
   // Thinking
-  'create_thinking_chain': createThinkingChain,
-  'analyze_problem': analyzeProblem,
-  'step_by_step_analysis': stepByStepAnalysis,
-  'format_as_plan': formatAsPlan,
+  'create_thinking_chain': (args) => createThinkingChain(args as Parameters<typeof createThinkingChain>[0]),
+  'analyze_problem': (args) => analyzeProblem(args as Parameters<typeof analyzeProblem>[0]),
+  'step_by_step_analysis': (args) => stepByStepAnalysis(args as Parameters<typeof stepByStepAnalysis>[0]),
+  'format_as_plan': (args) => formatAsPlan(args as Parameters<typeof formatAsPlan>[0]),
 
   // Planning
-  'generate_prd': generatePrd,
-  'create_user_stories': createUserStories,
-  'analyze_requirements': analyzeRequirements,
-  'feature_roadmap': featureRoadmap,
+  'generate_prd': (args) => generatePrd(args as Parameters<typeof generatePrd>[0]),
+  'create_user_stories': (args) => createUserStories(args as Parameters<typeof createUserStories>[0]),
+  'analyze_requirements': (args) => analyzeRequirements(args as Parameters<typeof analyzeRequirements>[0]),
+  'feature_roadmap': (args) => featureRoadmap(args as Parameters<typeof featureRoadmap>[0]),
 
   // Prompt
-  'enhance_prompt': enhancePrompt,
-  'analyze_prompt': analyzePrompt,
-  'enhance_prompt_gemini': enhancePromptGemini,
+  'enhance_prompt': (args) => enhancePrompt(args as Parameters<typeof enhancePrompt>[0]),
+  'analyze_prompt': (args) => analyzePrompt(args as Parameters<typeof analyzePrompt>[0]),
+  'enhance_prompt_gemini': (args) => enhancePromptGemini(args as Parameters<typeof enhancePromptGemini>[0]),
 
   // Reasoning
-  'apply_reasoning_framework': applyReasoningFramework,
+  'apply_reasoning_framework': (args) => applyReasoningFramework(args as Parameters<typeof applyReasoningFramework>[0]),
 
   // Analytics (v2.0 NEW)
-  'get_usage_analytics': getUsageAnalytics
+  'get_usage_analytics': (args) => getUsageAnalytics(args as Parameters<typeof getUsageAnalytics>[0])
 };
+
+// ============================================================================
+// CONFIGURATION SCHEMA - For Smithery session configuration
+// ============================================================================
+
+export const configSchema = z.object({
+  // Optional configuration for memory management
+  maxMemories: z.number().min(10).max(1000).default(100).describe('Maximum number of memories to store'),
+  enableGraph: z.boolean().default(true).describe('Enable knowledge graph features'),
+  // Add more config options as needed
+});
 
 // ============================================================================
 // SERVER SETUP
 // ============================================================================
 
 function createServer() {
-  const server = new Server(
+  const mcpServer = new McpServer(
     {
-      name: 'Hi-AI',
-      version: '2.1.0',
+      name: 'Op-AI',
+      version: '3.0.0',
     },
     {
       capabilities: {
@@ -229,6 +242,8 @@ function createServer() {
       },
     }
   );
+
+  const server = mcpServer.server;
 
   // List all available tools
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -317,7 +332,7 @@ function createServer() {
     {
       uri: 'hi-ai://context/session',
       name: '🧠 Session Context (Auto-load)',
-      description: '세션 시작 시 이전 메모리와 지식 그래프 컨텍스트를 자동으로 제공합니다. 새 대화를 시작할 때 이 리소스를 읽으면 프로젝트 컨텍스트를 빠르게 파악할 수 있습니다.',
+      description: 'Automatically provides previous memory and knowledge graph context when starting a session. When starting a new conversation, reading this resource allows you to quickly understand the project context.',
       mimeType: 'text/plain'
     },
     {
@@ -356,19 +371,19 @@ function createServer() {
           const memories = memoryManager.list().slice(0, 15);
           const graph = memoryManager.getMemoryGraph(undefined, 2);
 
-          let contextText = `# 🧠 세션 컨텍스트\n\n`;
-          contextText += `> 이전 세션의 메모리와 지식 그래프입니다.\n\n`;
+          let contextText = `# 🧠 Session Context\n\n`;
+          contextText += `> Previous session memories and knowledge graph.\n\n`;
 
           // Stats
-          contextText += `## 📊 통계\n`;
-          contextText += `- 총 메모리: ${stats.total}개\n`;
+          contextText += `## 📊 Statistics\n`;
+          contextText += `- Total memories: ${stats.total}\n`;
           const catStats = Object.entries(stats.byCategory).slice(0, 5).map(([c, n]) => `${c}: ${n}`).join(', ');
-          contextText += `- 카테고리: ${catStats || '없음'}\n\n`;
+          contextText += `- Categories: ${catStats || 'None'}\n\n`;
 
           // Top memories
-          contextText += `## 📝 주요 메모리\n\n`;
+          contextText += `## 📝 Key Memories\n\n`;
           if (memories.length === 0) {
-            contextText += `_저장된 메모리가 없습니다._\n\n`;
+            contextText += `_No saved memories._\n\n`;
           } else {
             for (const m of memories) {
               const preview = m.value.length > 100 ? m.value.substring(0, 100) + '...' : m.value;
@@ -380,17 +395,17 @@ function createServer() {
 
           // Graph summary
           if (graph.edges.length > 0) {
-            contextText += `## 🔗 지식 그래프\n\n`;
+            contextText += `## 🔗 Knowledge Graph\n\n`;
             for (const edge of graph.edges.slice(0, 5)) {
               contextText += `- ${edge.sourceKey} → ${edge.targetKey} (${edge.relationType})\n`;
             }
             if (graph.edges.length > 5) {
-              contextText += `- _... 외 ${graph.edges.length - 5}개의 관계_\n`;
+              contextText += `- _... and ${graph.edges.length - 5} more relations_\n`;
             }
           }
 
           contextText += `\n---\n`;
-          contextText += `💡 **Tip**: get_session_context 도구를 사용하면 더 상세한 컨텍스트를 조회할 수 있습니다.`;
+          contextText += `💡 **Tip**: Use the get_session_context tool for more detailed context.`;
 
           return {
             contents: [{
@@ -404,7 +419,7 @@ function createServer() {
             contents: [{
               uri,
               mimeType: 'text/plain',
-              text: `# 세션 컨텍스트\n\n_메모리를 불러올 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}_`
+              text: `# Session Context\n\n_Cannot load memories: ${error instanceof Error ? error.message : 'Unknown error'}_`
             }]
           };
         }
@@ -492,7 +507,7 @@ function createServer() {
 - search_memories_advanced, create_memory_timeline
 
 ### Memory Management - Session (1) [v2.1 NEW]
-- get_session_context 🚀 세션 시작 시 자동 실행 권장
+- get_session_context 🚀 Recommended for auto-execution on session start
 
 ### Code Quality (6)
 - get_coding_guide, apply_quality_rules
@@ -516,10 +531,10 @@ function createServer() {
 - preview_ui_ascii
 
 ## Resources (4)
-- hi-ai://context/session - 🧠 세션 컨텍스트 자동 로드
-- hi-ai://guides/quality-rules - 코드 품질 규칙
-- hi-ai://guides/naming-conventions - 네이밍 컨벤션
-- hi-ai://info/capabilities - 기능 소개`
+- hi-ai://context/session - 🧠 Auto-load session context
+- hi-ai://guides/quality-rules - Code quality rules
+- hi-ai://guides/naming-conventions - Naming conventions
+- hi-ai://info/capabilities - Feature overview`
           }]
         };
       default:
@@ -541,7 +556,7 @@ function createServer() {
         );
       }
 
-      return await handler(args as any);
+      return await handler(args);
     } catch (error) {
       if (error instanceof McpError) {
         throw error;
@@ -554,7 +569,7 @@ function createServer() {
     }
   });
 
-  return server;
+  return mcpServer;
 }
 
 // ============================================================================
@@ -562,7 +577,11 @@ function createServer() {
 // ============================================================================
 
 // Default export for Smithery platform
-export default function({ sessionId, config }: { sessionId: string; config: any }) {
+
+export default function({ sessionId, config }: { sessionId: string; config?: Partial<z.infer<typeof configSchema>> }) {
+  void sessionId;
+  void config;
+  // Config is available for future use but not currently needed
   return createServer();
 }
 
@@ -600,7 +619,11 @@ async function main() {
 }
 
 // Only run main when not being imported by Smithery
-if (process.argv[1]?.includes('hi-ai') || process.argv[1]?.endsWith('index.js')) {
+if (
+  process.argv[1]?.includes('hi-ai') ||
+  process.argv[1]?.includes('op-ai') ||
+  process.argv[1]?.endsWith('index.js')
+) {
   main().catch((error) => {
     console.error('Server initialization failed:', error);
     process.exit(1);

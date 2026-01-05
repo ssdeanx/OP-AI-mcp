@@ -35,7 +35,7 @@ const CODE_QUALITY_METRICS = {
 
 export const checkCouplingCohesionDefinition: ToolDefinition = {
   name: 'check_coupling_cohesion',
-  description: '결합도|응집도|coupling|cohesion|dependencies check|module structure - Check coupling and cohesion',
+  description: 'coupling|cohesion|dependencies check|module structure - Check coupling and cohesion',
   inputSchema: {
     type: 'object',
     properties: {
@@ -77,16 +77,16 @@ export async function checkCouplingCohesion(args: { code: string; type?: string;
     status: 'pending' as string
   };
 
-  // AST 기반 의존성/구조 분석
+  // AST-based dependency/structure analysis
   try {
     const sourceFile = AST_PROJECT.createSourceFile('temp.ts', couplingCode, {
       overwrite: true,
       scriptKind: ScriptKind.TS
     });
-    // Import/Require 분석
+    // Import/Require analysis
     const importDecls = sourceFile.getImportDeclarations();
     const requireCalls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression).filter((call: CallExpression) => call.getExpression().getText() === 'require');
-    // 클래스/함수/모듈 구조 분석
+    // Class/function/module structure analysis
     const classDecls = sourceFile.getClasses();
     const funcDecls = sourceFile.getFunctions();
     const exportDecls = sourceFile.getExportDeclarations();
@@ -101,7 +101,7 @@ export async function checkCouplingCohesion(args: { code: string; type?: string;
     };
   } catch (e) {
     couplingAnalysis.results.ast = {
-      error: 'AST 분석 실패: ' + (e instanceof Error ? e.message : String(e))
+      error: 'AST analysis failed: ' + (e instanceof Error ? e.message : String(e))
     };
   }
   

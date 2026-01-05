@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const stepByStepAnalysisDefinition: ToolDefinition = {
   name: 'step_by_step_analysis',
-  description: '단계별|차근차근|하나씩|step by step|one by one|gradually - Perform detailed step-by-step analysis',
+  description: 'step by step|one by one|gradually - Perform detailed step-by-step analysis',
   inputSchema: {
     type: 'object',
     properties: {

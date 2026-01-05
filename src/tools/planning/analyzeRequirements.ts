@@ -17,7 +17,7 @@ interface Requirement {
 
 export const analyzeRequirementsDefinition: ToolDefinition = {
   name: 'analyze_requirements',
-  description: '요구사항 분석|필요한 것들|requirements analysis|what we need|analyze requirements|필수 기능 - Analyze project requirements',
+  description: 'requirements analysis|what we need|analyze requirements - Analyze project requirements',
   inputSchema: {
     type: 'object',
     properties: {

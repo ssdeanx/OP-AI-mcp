@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const generatePrdDefinition: ToolDefinition = {
   name: 'generate_prd',
-  description: 'PRD|요구사항 문서|제품 요구사항|product requirements|requirements document|spec document - Generate Product Requirements Document',
+  description: 'PRD|product requirements|requirements document|spec document - Generate Product Requirements Document',
   inputSchema: {
     type: 'object',
     properties: {

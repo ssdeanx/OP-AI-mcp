@@ -64,7 +64,6 @@ Hi-AI is an AI development assistant that implements the **Model Context Protoco
 - **Timeline**: Time-ordered memory history visualization
 
 **Key Tools:**
-
 - `get_session_context` - 🚀 Auto-load context on session start (v2.1 NEW)
 - `save_memory` - Store information in long-term memory
 - `recall_memory` - Search stored information
@@ -85,7 +84,6 @@ AST-based code analysis and exploration tools:
 - **Multi-Language**: TypeScript, JavaScript, Python support
 
 **Key Tools:**
-
 - `find_symbol` - Search symbol definitions
 - `find_references` - Find symbol references
 - `analyze_dependency_graph` - Dependency graph analysis (v2.0 NEW)
@@ -100,7 +98,6 @@ Comprehensive code metrics and quality evaluation:
 - **Improvement Suggestions**: Actionable refactoring recommendations
 
 **Key Tools:**
-
 - `analyze_complexity` - Complexity metrics analysis
 - `validate_code_quality` - Code quality evaluation
 - `check_coupling_cohesion` - Coupling/cohesion analysis
@@ -118,7 +115,6 @@ Systematic requirements analysis and roadmap generation:
 - **Roadmap Creation**: Phased development schedule planning
 
 **Key Tools:**
-
 - `generate_prd` - Generate Product Requirements Document
 - `create_user_stories` - Create user stories
 - `analyze_requirements` - Requirements analysis
@@ -134,7 +130,6 @@ Structured problem solving and decision support:
 - **Execution Plan**: Convert tasks into actionable plans
 
 **Key Tools:**
-
 - `create_thinking_chain` - Create thinking chain
 - `analyze_problem` - Problem analysis
 - `step_by_step_analysis` - Step-by-step analysis
@@ -149,7 +144,6 @@ Prompt quality enhancement and optimization:
 - **Gemini Optimization**: Google Gemini API prompting strategies
 
 **Key Tools:**
-
 - `enhance_prompt` - Enhance prompt
 - `analyze_prompt` - Prompt quality analysis
 - `enhance_prompt_gemini` - Gemini prompting strategies
@@ -162,7 +156,6 @@ Systematic analysis of complex problems:
 - **Logical Validation**: Ensure completeness and precision
 
 **Key Tools:**
-
 - `apply_reasoning_framework` - 9-step reasoning framework
 
 ### 8. Usage Analytics (v2.0 NEW)
@@ -173,7 +166,6 @@ Tool usage statistics and analysis:
 - **Graph Analysis**: Connection statistics, cluster information
 
 **Key Tools:**
-
 - `get_usage_analytics` - Usage analytics query
 
 ### 9. UI Preview & Time
@@ -191,7 +183,7 @@ Hi-AI provides a powerful GCP operations + code modification workflow when used 
 
 When hi-gcloud detects errors, it automatically recommends hi-ai tools:
 
-```bash
+```
 📋 Cloud Run logs: my-api
 🔴 3 errors detected.
 
@@ -201,7 +193,7 @@ When hi-gcloud detects errors, it automatically recommends hi-ai tools:
 
 ### Workflow Example
 
-```bash
+```
 User: "Deployment failed"
 
 [hi-gcloud]
@@ -439,27 +431,23 @@ graph TB
 ### Core Components
 
 #### MemoryManager (v2.0 extended)
-
 - **Role**: Persistent memory storage and knowledge graph management
 - **Technology**: SQLite, better-sqlite3
 - **Features**: CRUD, search, priority, graph relationships, BFS/DFS traversal
 - **Optimization**: WAL mode, indexing, Prepared Statements
 
 #### ContextCompressor
-
 - **Role**: Context compression management
 - **Algorithm**: Priority-based compression
 - **Features**: Selective preservation based on importance
 
 #### ProjectCache
-
 - **Role**: ts-morph project caching
 - **Strategy**: LRU algorithm
 - **Features**: Improved repeated analysis performance
 - **Limits**: 100MB/project, 200MB total
 
 #### PythonParser
-
 - **Role**: Python code AST analysis
 - **Method**: subprocess execution
 - **Features**: Symbol extraction, complexity calculation
@@ -498,19 +486,16 @@ CREATE TABLE memory_relations (
 ### Major Optimizations
 
 #### Project Caching
-
 - Improved repeated analysis performance through LRU cache
 - 5-minute TTL to maintain fresh state
 - Resource management through memory limits
 
 #### Memory Operations
-
 - SQLite transaction for batch operation optimization
 - Time complexity improvement: O(n²) → O(n)
 - Fast lookup through indexing
 
 #### Graph Traversal (v2.0)
-
 - Efficient traversal with BFS/DFS algorithms
 - Cluster detection with Union-Find
 - Path finding optimization

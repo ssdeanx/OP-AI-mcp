@@ -3,44 +3,47 @@
 import { ToolResult, ToolDefinition } from '../../types/tool.js';
 import { ProjectCache } from '../../lib/ProjectCache.js';
 import { Node, SyntaxKind } from 'ts-morph';
+import fastGlob from 'fast-glob';
+import { readFile } from 'fs/promises';
+import { PythonParser } from '../../lib/PythonParser.js';
 
 export const analyzeDependencyGraphDefinition: ToolDefinition = {
   name: 'analyze_dependency_graph',
-  description: `코드 의존성 그래프를 분석합니다.
+  description: `Analyzes code dependency graph.
 
-키워드: 의존성, 관계 분석, 순환 참조, dependency graph, circular dependency
+Keywords: dependency, relationship analysis, circular dependency, dependency graph, circular dependency
 
-**분석 내용:**
-- 파일 간 import/export 관계
-- 순환 의존성 감지
-- 모듈 클러스터 식별
-- 코드 결합도 분석
+**Analysis Content:**
+- Import/export relationships between files
+- Circular dependency detection
+- Module cluster identification
+- Code coupling analysis
 
-사용 예시:
-- "src 폴더의 의존성 그래프 분석해줘"
-- "index.ts의 의존 관계 보여줘"`,
+Usage examples:
+- "Analyze dependency graph of src folder"
+- "Show dependency relationships of index.ts"`,
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: {
         type: 'string',
-        description: '프로젝트 경로'
+        description: 'Project path'
       },
       targetFile: {
         type: 'string',
-        description: '특정 파일 분석 (선택사항)'
+        description: 'Specific file to analyze (optional)'
       },
       maxDepth: {
         type: 'number',
-        description: '최대 탐색 깊이 (기본값: 3)'
+        description: 'Maximum search depth (default: 3)'
       },
       includeExternal: {
         type: 'boolean',
-        description: '외부 패키지 포함 여부 (기본값: false)'
+        description: 'Include external packages (default: false)'
       },
       detectCircular: {
         type: 'boolean',
-        description: '순환 의존성 감지 (기본값: true)'
+        description: 'Detect circular dependencies (default: true)'
       }
     },
     required: ['projectPath']
@@ -94,7 +97,7 @@ export async function analyzeDependencyGraph(args: AnalyzeDependencyGraphArgs): 
       return {
         content: [{
           type: 'text',
-          text: `✗ 프로젝트에서 소스 파일을 찾을 수 없습니다: ${projectPath}`
+          text: `✗ No source files found in project: ${projectPath}`
         }]
       };
     }
@@ -179,6 +182,64 @@ export async function analyzeDependencyGraph(args: AnalyzeDependencyGraphArgs): 
       graph.nodes.push(node);
     }
 
+    // Include Python files imports (optional) — try to resolve to project files
+    const pythonFiles = await fastGlob(['**/*.py'], {
+      cwd: projectPath,
+      absolute: true,
+      ignore: ['**/node_modules/**', '**/.git/**', '**/venv/**', '**/__pycache__/**']
+    });
+
+    for (const pyFile of pythonFiles) {
+      try {
+        const content = await readFile(pyFile, 'utf-8');
+        const relative = getRelativePath(pyFile, projectPath);
+        const imports: string[] = [];
+
+        // Use PythonParser to extract import symbols (fast-path used internally)
+        const pySymbols = (await PythonParser.findSymbols(content)).filter(s => s.kind === 'import').map(s => s.name);
+
+        for (const impName of pySymbols) {
+          // Try to resolve module name to a local file
+          const candidates = [
+            `${impName.replace(/\./g, '/')}.py`,
+            `${impName.replace(/\./g, '/')}/__init__.py`,
+            `${impName.split('.').pop()}.py`
+          ];
+
+          let resolved: string | null = null;
+          for (const cand of candidates) {
+            const matches = await fastGlob([`**/${cand}`], { cwd: projectPath, absolute: true });
+            if (matches.length > 0) {
+              resolved = getRelativePath(matches[0], projectPath);
+              break;
+            }
+          }
+
+          if (resolved) {
+            imports.push(resolved);
+            graph.edges.push({ from: relative, to: resolved, type: 'import' });
+            if (!adjacencyList.has(relative)) adjacencyList.set(relative, new Set());
+            adjacencyList.get(relative)!.add(resolved);
+          } else {
+            // keep module name as external reference
+            imports.push(impName);
+          }
+        }
+
+        // Add node for python file if missing
+        if (!fileMap.has(relative)) {
+          const node: DependencyNode = { file: relative, imports, exports: [], depth: 0 };
+          fileMap.set(relative, node);
+          graph.nodes.push(node);
+        } else {
+          const node = fileMap.get(relative)!;
+          node.imports.push(...imports);
+        }
+      } catch (e) {
+        // ignore problematic files
+      }
+    }
+
     // Detect circular dependencies
     if (detectCircular) {
       graph.circularDependencies = findCircularDependencies(adjacencyList);
@@ -188,21 +249,21 @@ export async function analyzeDependencyGraph(args: AnalyzeDependencyGraphArgs): 
     graph.clusters = findClusters(adjacencyList);
 
     // Generate output
-    let output = `## 의존성 그래프 분석\n\n`;
-    output += `**프로젝트**: ${projectPath}\n`;
-    output += `**분석된 파일**: ${graph.nodes.length}개\n`;
-    output += `**의존 관계**: ${graph.edges.length}개\n\n`;
+    let output = `## Dependency Graph Analysis\n\n`;
+    output += `**Project**: ${projectPath}\n`;
+    output += `**Analyzed files**: ${graph.nodes.length}\n`;
+    output += `**Dependency relationships**: ${graph.edges.length}\n\n`;
 
     // Show target file dependencies if specified
     if (targetFile) {
       const targetNode = graph.nodes.find(n => n.file.includes(targetFile));
       if (targetNode) {
-        output += `### ${targetFile} 의존성\n\n`;
-        output += `**Imports** (${targetNode.imports.length}개):\n`;
+        output += `### ${targetFile} Dependencies\n\n`;
+        output += `**Imports** (${targetNode.imports.length}):\n`;
         for (const imp of targetNode.imports) {
           output += `- ← ${imp}\n`;
         }
-        output += `\n**Exports** (${targetNode.exports.length}개):\n`;
+        output += `\n**Exports** (${targetNode.exports.length}):\n`;
         for (const exp of targetNode.exports) {
           output += `- → ${exp}\n`;
         }
@@ -212,7 +273,7 @@ export async function analyzeDependencyGraph(args: AnalyzeDependencyGraphArgs): 
 
     // Circular dependencies warning
     if (graph.circularDependencies.length > 0) {
-      output += `### ⚠️ 순환 의존성 감지됨\n\n`;
+      output += `### ⚠️ Circular Dependencies Detected\n\n`;
       for (const cycle of graph.circularDependencies) {
         output += `- ${cycle.join(' → ')} → ${cycle[0]}\n`;
       }
@@ -221,15 +282,15 @@ export async function analyzeDependencyGraph(args: AnalyzeDependencyGraphArgs): 
 
     // Clusters
     if (graph.clusters.length > 0) {
-      output += `### 모듈 클러스터\n\n`;
+      output += `### Module Clusters\n\n`;
       for (let i = 0; i < graph.clusters.length; i++) {
         if (graph.clusters[i].length > 1) {
-          output += `**클러스터 ${i + 1}** (${graph.clusters[i].length}개):\n`;
+          output += `**Cluster ${i + 1}** (${graph.clusters[i].length} files):\n`;
           for (const file of graph.clusters[i].slice(0, 5)) {
             output += `  - ${file}\n`;
           }
           if (graph.clusters[i].length > 5) {
-            output += `  - ... 외 ${graph.clusters[i].length - 5}개\n`;
+            output += `  - ... and ${graph.clusters[i].length - 5} more\n`;
           }
           output += '\n';
         }
@@ -238,12 +299,12 @@ export async function analyzeDependencyGraph(args: AnalyzeDependencyGraphArgs): 
 
     // Mermaid diagram for small graphs
     if (graph.nodes.length <= 20) {
-      output += `### 의존성 다이어그램\n\n`;
+      output += `### Dependency Diagram\n\n`;
       output += generateMermaidDiagram(graph);
     }
 
     // Statistics
-    output += `### 통계\n\n`;
+    output += `### Statistics\n\n`;
     output += generateStatistics(graph);
 
     return {
@@ -256,7 +317,7 @@ export async function analyzeDependencyGraph(args: AnalyzeDependencyGraphArgs): 
     return {
       content: [{
         type: 'text',
-        text: `✗ 의존성 분석 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `✗ Dependency analysis error: ${error instanceof Error ? error.message : 'Unknown error'}`
       }]
     };
   }
@@ -421,23 +482,23 @@ function generateStatistics(graph: DependencyGraph): string {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  let stats = `- **총 파일**: ${graph.nodes.length}개\n`;
-  stats += `- **총 의존 관계**: ${graph.edges.length}개\n`;
-  stats += `- **순환 의존성**: ${graph.circularDependencies.length}개\n`;
-  stats += `- **클러스터**: ${graph.clusters.length}개\n\n`;
+  let stats = `- **Total files**: ${graph.nodes.length}\n`;
+  stats += `- **Total dependencies**: ${graph.edges.length}\n`;
+  stats += `- **Circular dependencies**: ${graph.circularDependencies.length}\n`;
+  stats += `- **Clusters**: ${graph.clusters.length}\n\n`;
 
   if (topImported.length > 0) {
-    stats += `**가장 많이 참조되는 파일**:\n`;
+    stats += `**Most referenced files**:\n`;
     for (const [file, count] of topImported) {
-      stats += `- ${file}: ${count}회\n`;
+      stats += `- ${file}: ${count} references\n`;
     }
     stats += '\n';
   }
 
   if (topDependencies.length > 0) {
-    stats += `**의존성이 많은 파일**:\n`;
+    stats += `**Files with most dependencies**:\n`;
     for (const { file, count } of topDependencies) {
-      stats += `- ${file}: ${count}개 import\n`;
+      stats += `- ${file}: ${count} imports\n`;
     }
   }
 

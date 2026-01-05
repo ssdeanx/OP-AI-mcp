@@ -5,11 +5,11 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const recallMemoryDefinition: ToolDefinition = {
   name: 'recall_memory',
-  description: `특정 메모리를 키로 조회합니다.
+  description: `Retrieve a specific memory by key.
 
-키워드: 떠올려, recall, 기억나, remember what, what was, remind
+Keywords: recall, remember what, what was, remind
 
-💡 전체 컨텍스트가 필요하면 get_session_context를 먼저 사용하세요.`,
+💡 If you need the full context, use get_session_context first.`,
   inputSchema: {
     type: 'object',
     properties: {

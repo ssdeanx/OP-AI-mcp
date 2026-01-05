@@ -1,10 +1,11 @@
 // Python code parser utility for v1.3
-// Uses Python's ast module via child_process
+// Uses Python's ast module via subprocess
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { existsSync, unlinkSync } from 'fs';
 import { writeFile, unlink } from 'fs/promises';
-import path from 'path';
+import path from 'node:path';
 import os from 'os';
 
 const execAsync = promisify(exec);
@@ -23,8 +24,7 @@ function getPythonCommand(): string {
 
     for (const pythonPath of pythonPaths) {
       try {
-        const fs = require('fs');
-        if (pythonPath.includes('\\') && fs.existsSync(pythonPath)) {
+        if (pythonPath.includes('\\') && existsSync(pythonPath)) {
           return `"${pythonPath}"`;
         }
       } catch {
@@ -61,8 +61,16 @@ export interface PythonComplexity {
   }>;
 }
 
+type PythonSymbolsResult = { success: true; symbols: PythonSymbol[] };
+type PythonComplexityResult = { success: true } & PythonComplexity;
+type PythonErrorResult = { success: false; error: string };
+
 export class PythonParser {
   private static cleanupRegistered = false;
+
+  private static isPythonExecError(error: unknown): error is NodeJS.ErrnoException {
+    return typeof error === 'object' && error !== null && 'code' in error;
+  }
 
   private static pythonScript = `
 import ast
@@ -191,9 +199,8 @@ if __name__ == '__main__':
     process.on('exit', () => {
       if (this.scriptPath) {
         try {
-          const fs = require('fs');
-          fs.unlinkSync(this.scriptPath);
-        } catch (e) {
+          unlinkSync(this.scriptPath);
+        } catch {
           // Ignore errors during cleanup
         }
       }
@@ -235,7 +242,9 @@ if __name__ == '__main__':
   /**
    * Execute Python code analysis with improved memory management
    */
-  private static async executePython(code: string, action: 'symbols' | 'complexity'): Promise<any> {
+  private static async executePython(code: string, action: 'symbols'): Promise<PythonSymbolsResult>;
+  private static async executePython(code: string, action: 'complexity'): Promise<PythonComplexityResult>;
+  private static async executePython(code: string, action: 'symbols' | 'complexity'): Promise<PythonSymbolsResult | PythonComplexityResult> {
     let codePath: string | null = null;
 
     try {
@@ -255,15 +264,25 @@ if __name__ == '__main__':
         console.error('Python stderr:', stderr);
       }
 
-      const result = JSON.parse(stdout);
+      const parsed: unknown = JSON.parse(stdout);
 
-      if (!result.success) {
-        throw new Error(result.error || `Python ${action} analysis failed`);
+      if (!parsed || typeof parsed !== 'object' || !('success' in parsed)) {
+        throw new Error(`Python ${action} analysis failed`);
       }
 
-      return result;
+      const base = parsed as { success: boolean };
+      if (!base.success) {
+        const err = parsed as PythonErrorResult;
+        throw new Error(err.error || `Python ${action} analysis failed`);
+      }
+
+      if (action === 'symbols') {
+        return parsed as PythonSymbolsResult;
+      }
+
+      return parsed as PythonComplexityResult;
     } catch (error) {
-      if ((error as any).code === 'ENOENT') {
+      if (this.isPythonExecError(error) && error.code === 'ENOENT') {
         throw new Error('Python 3 not found. Please install Python 3 to analyze Python code.');
       }
       throw error;
@@ -275,7 +294,76 @@ if __name__ == '__main__':
     }
   }
 
+  /**
+   * Fast heuristic symbol finder using regular expressions.
+   * This provides a lightweight, dependency-free fast-path for common symbol lookups.
+   */
+  private static findSymbolsFast(code: string): PythonSymbol[] {
+    const symbols: PythonSymbol[] = [];
+
+    const getPos = (idx: number) => {
+      const before = code.slice(0, idx);
+      const line = before.split('\n').length;
+      const col = idx - before.lastIndexOf('\n') - 1;
+      return { line, column: col };
+    };
+
+    // Functions
+    const funcRe = /^\s*def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(.*?\)\s*:/gm;
+    let m: RegExpExecArray | null;
+    while ((m = funcRe.exec(code)) !== null) {
+      const pos = getPos(m.index);
+      symbols.push({ name: m[1], kind: 'function', line: pos.line, column: pos.column });
+    }
+
+    // Classes
+    const classRe = /^\s*class\s+([A-Za-z_][A-Za-z0-9_]*)\b/gm;
+    while ((m = classRe.exec(code)) !== null) {
+      const pos = getPos(m.index);
+      symbols.push({ name: m[1], kind: 'class', line: pos.line, column: pos.column });
+    }
+
+    // Simple variable assignments (module-level)
+    const varRe = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[^=].*$/gm;
+    while ((m = varRe.exec(code)) !== null) {
+      const lineStart = code.lastIndexOf('\n', m.index) + 1;
+      const line = code.slice(lineStart, m.index + m[0].length);
+      // Skip assignments that are likely function or class headers
+      if (/^\s*(def|class|import|from)\b/.test(line)) continue;
+      const pos = getPos(m.index);
+      symbols.push({ name: m[1], kind: 'variable', line: pos.line, column: pos.column });
+    }
+
+    // Imports
+    const importRe = /^(?:\s*import\s+([A-Za-z0-9_\\.]+)|\s*from\s+([A-Za-z0-9_\\.]+)\s+import\s+([A-Za-z0-9_*,\s]+))/gm;
+    while ((m = importRe.exec(code)) !== null) {
+      const name = m[1] || m[3] || m[2];
+      if (!name) continue;
+      const pos = getPos(m.index);
+      // when 'from X import A, B' m[3] contains the imported names - capture them
+      if (m[3]) {
+        for (const part of m[3].split(',')) {
+          const nm = part.trim().split(' as ')[0];
+          if (nm) symbols.push({ name: nm, kind: 'import', line: pos.line, column: pos.column });
+        }
+      } else {
+        symbols.push({ name, kind: 'import', line: pos.line, column: pos.column });
+      }
+    }
+
+    return symbols;
+  }
+
   public static async findSymbols(code: string): Promise<PythonSymbol[]> {
+    // Try a fast regex-based pass first (very fast, no deps). If it finds results, return them.
+    // For more thorough analysis, callers can still call analyzeComplexity or the Python AST-based path.
+    try {
+      const fast = this.findSymbolsFast(code);
+      if (fast.length > 0) return fast;
+    } catch (e) {
+      // ignore and fallback
+    }
+
     const result = await this.executePython(code, 'symbols');
     return result.symbols || [];
   }

@@ -6,45 +6,45 @@ import { MemoryManager } from '../../lib/MemoryManager.js';
 
 export const getSessionContextDefinition: ToolDefinition = {
   name: 'get_session_context',
-  description: `🚀 [새 대화/세션 시작 시 자동 실행 권장] 이전 세션의 메모리, 지식 그래프, 최근 작업 내역을 한 번에 조회합니다.
+  description: `🚀 [Recommended for new conversations/session start] Query previous session memories, knowledge graph, and recent work history at once.
 
-이 도구는 새로운 대화를 시작할 때 가장 먼저 실행하면 좋습니다. 프로젝트의 컨텍스트를 빠르게 파악할 수 있습니다.
+This tool is best executed first when starting a new conversation. You can quickly understand the project context.
 
-키워드: 세션 시작, 컨텍스트, 이전 작업, session start, context, previous work, what did we do
+Keywords: session start, context, previous work, what did we do
 
-사용 예시:
-- "이전에 무슨 작업 했었지?"
-- "프로젝트 컨텍스트 알려줘"
-- "세션 컨텍스트 조회"`,
+Usage examples:
+- "What were we working on before?"
+- "Tell me the project context"
+- "Get session context"`,
   inputSchema: {
     type: 'object',
     properties: {
       projectName: {
         type: 'string',
-        description: '프로젝트명으로 필터링 (선택)'
+        description: 'Filter by project name (optional)'
       },
       category: {
         type: 'string',
-        description: '카테고리로 필터링 (선택)'
+        description: 'Filter by category (optional)'
       },
       memoryLimit: {
         type: 'number',
-        description: '조회할 메모리 수 (기본값: 15)',
+        description: 'Number of memories to retrieve (default: 15)',
         default: 15
       },
       includeGraph: {
         type: 'boolean',
-        description: '지식 그래프 포함 여부 (기본값: true)',
+        description: 'Include knowledge graph (default: true)',
         default: true
       },
       includeTimeline: {
         type: 'boolean',
-        description: '타임라인 포함 여부 (기본값: true)',
+        description: 'Include timeline (default: true)',
         default: true
       },
       timeRange: {
         type: 'string',
-        description: '타임라인 조회 범위',
+        description: 'Timeline query range',
         enum: ['1d', '7d', '30d', 'all'],
         default: '7d'
       }
@@ -84,23 +84,23 @@ export async function getSessionContext(args: GetSessionContextArgs): Promise<To
     const sections: string[] = [];
 
     // Header
-    sections.push('# 🧠 세션 컨텍스트\n');
-    sections.push(`> 이전 세션의 메모리와 작업 내역입니다.\n`);
+    sections.push('# 🧠 Session Context\n');
+    sections.push(`> Previous session memories and work history.\n`);
 
     // 1. Memory Statistics
     const stats = memoryManager.getStats();
-    sections.push('## 📊 메모리 통계\n');
-    sections.push(`- **총 메모리**: ${stats.total}개`);
+    sections.push('## 📊 Memory Statistics\n');
+    sections.push(`- **Total Memories**: ${stats.total}`);
 
     const categoryStats = Object.entries(stats.byCategory)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([cat, count]) => `${cat}: ${count}`)
       .join(', ');
-    sections.push(`- **카테고리**: ${categoryStats || '없음'}\n`);
+    sections.push(`- **Categories**: ${categoryStats || 'None'}\n`);
 
     // 2. Recent Memories (Priority-sorted)
-    sections.push('## 📝 주요 메모리\n');
+    sections.push('## 📝 Key Memories\n');
 
     let memories = memoryManager.list(category);
 
@@ -123,7 +123,7 @@ export async function getSessionContext(args: GetSessionContextArgs): Promise<To
     const topMemories = memories.slice(0, memoryLimit);
 
     if (topMemories.length === 0) {
-      sections.push('_저장된 메모리가 없습니다._\n');
+      sections.push('_No memories stored yet._\n');
     } else {
       for (const memory of topMemories) {
         const priority = memory.priority ? `⭐${memory.priority}` : '';
@@ -143,7 +143,7 @@ export async function getSessionContext(args: GetSessionContextArgs): Promise<To
       const graph = memoryManager.getMemoryGraph(undefined, 2);
 
       if (graph.edges.length > 0) {
-        sections.push('## 🔗 지식 그래프\n');
+        sections.push('## 🔗 Knowledge Graph\n');
 
         // Show key relationships
         const relationSummary = summarizeRelations(graph.edges);
@@ -151,7 +151,7 @@ export async function getSessionContext(args: GetSessionContextArgs): Promise<To
 
         // Show clusters
         if (graph.clusters.length > 0) {
-          sections.push('\n**관련 그룹**:');
+          sections.push('\n**Related Groups**:');
           for (const cluster of graph.clusters.slice(0, 3)) {
             sections.push(`- [${cluster.join(' ↔ ')}]`);
           }
@@ -162,13 +162,13 @@ export async function getSessionContext(args: GetSessionContextArgs): Promise<To
 
     // 4. Recent Timeline (if enabled)
     if (includeTimeline) {
-      sections.push('## 📅 최근 타임라인\n');
+      sections.push('## 📅 Recent Timeline\n');
 
       const startDate = getStartDate(timeRange);
       const timeline = memoryManager.getTimeline(startDate, undefined, 10);
 
       if (timeline.length === 0) {
-        sections.push('_최근 활동이 없습니다._\n');
+        sections.push('_No recent activity._\n');
       } else {
         const groupedByDate = groupByDate(timeline);
 
@@ -184,11 +184,11 @@ export async function getSessionContext(args: GetSessionContextArgs): Promise<To
 
     // 5. Quick Actions Hint
     sections.push('---');
-    sections.push('## 💡 다음 단계\n');
-    sections.push('- 특정 메모리 상세 조회: `recall_memory`');
-    sections.push('- 새 메모리 저장: `save_memory`');
-    sections.push('- 그래프 탐색: `get_memory_graph`');
-    sections.push('- 고급 검색: `search_memories_advanced`');
+    sections.push('## 💡 Next Steps\n');
+    sections.push('- Query specific memory details: `recall_memory`');
+    sections.push('- Save new memory: `save_memory`');
+    sections.push('- Explore graph: `get_memory_graph`');
+    sections.push('- Advanced search: `search_memories_advanced`');
 
     return {
       content: [{
@@ -200,7 +200,7 @@ export async function getSessionContext(args: GetSessionContextArgs): Promise<To
     return {
       content: [{
         type: 'text',
-        text: `✗ 세션 컨텍스트 조회 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `✗ Session context query error: ${error instanceof Error ? error.message : 'Unknown error'}`
       }]
     };
   }
@@ -213,11 +213,11 @@ function formatDate(timestamp: string): string {
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return '오늘';
-    if (diffDays === 1) return '어제';
-    if (diffDays < 7) return `${diffDays}일 전`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전`;
-    return date.toLocaleDateString('ko-KR');
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString('en-US');
   } catch {
     return timestamp.substring(0, 10);
   }
@@ -276,7 +276,7 @@ function summarizeRelations(edges: any[]): string {
   }
 
   if (edges.length > 5) {
-    lines.push(`- _... 외 ${edges.length - 5}개의 관계_`);
+    lines.push(`- _... and ${edges.length - 5} more relationships_`);
   }
 
   return lines.join('\n');

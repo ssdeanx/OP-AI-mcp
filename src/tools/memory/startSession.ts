@@ -38,7 +38,7 @@ async function loadGuides(): Promise<CodingGuide[]> {
 
 export const startSessionDefinition: ToolDefinition = {
   name: 'start_session',
-  description: 'hi-ai|hello|안녕|하이아이 - Start session with context',
+  description: 'hi-ai|hello - Start session with context',
   inputSchema: {
     type: 'object',
     properties: {

@@ -5,11 +5,11 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const listMemoriesDefinition: ToolDefinition = {
   name: 'list_memories',
-  description: `저장된 메모리 목록을 조회합니다. 카테고리별 필터링 가능.
+  description: `Query the list of saved memories. Supports category filtering.
 
-키워드: 뭐 있었지, 저장된 거, 목록, what did I save, list memories, show saved
+Keywords: what did I save, list memories, show saved
 
-💡 세션 시작 시 전체 컨텍스트가 필요하면 get_session_context를 사용하세요.`,
+💡 Use get_session_context for full context when starting a session.`,
   inputSchema: {
     type: 'object',
     properties: {

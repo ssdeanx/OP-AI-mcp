@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const thinkAloudProcessDefinition: ToolDefinition = {
   name: 'think_aloud_process',
-  description: '생각해봐|고민해봐|어떻게 생각해|think about it|let me think|reasoning - Generate think-aloud reasoning process',
+  description: 'think about it|let me think|reasoning - Generate think-aloud reasoning process',
   inputSchema: {
     type: 'object',
     properties: {

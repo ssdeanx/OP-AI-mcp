@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const analyzeProblemDefinition: ToolDefinition = {
   name: 'analyze_problem',
-  description: '문제 분석|어떻게 접근|분석해줘|analyze this|how to approach|break this down - Break down complex problem into structured steps',
+  description: 'analyze this|how to approach|break this down - Break down complex problem into structured steps',
   inputSchema: {
     type: 'object',
     properties: {

@@ -5,35 +5,35 @@ import { MemoryManager } from '../../lib/MemoryManager.js';
 
 export const getUsageAnalyticsDefinition: ToolDefinition = {
   name: 'get_usage_analytics',
-  description: `도구 사용 분석 및 통계를 조회합니다.
+  description: `Query tool usage analytics and statistics.
 
-키워드: 분석, 통계, 사용량, analytics, statistics, usage
+Keywords: analytics, statistics, usage, usage data
 
-**제공 정보:**
-- 메모리 사용 통계
-- 카테고리별 분포
-- 시간별 사용 패턴
-- 그래프 관계 통계
+**Provides Information:**
+- Memory usage statistics
+- Category distribution
+- Time-based usage patterns
+- Graph relationship statistics
 
-사용 예시:
-- "사용 통계 보여줘"
-- "메모리 분석"`,
+Usage examples:
+- "Show usage statistics"
+- "Memory analysis"`,
   inputSchema: {
     type: 'object',
     properties: {
       type: {
         type: 'string',
-        description: '분석 유형',
+        description: 'Analysis type',
         enum: ['memory', 'graph', 'all']
       },
       timeRange: {
         type: 'string',
-        description: '시간 범위',
+        description: 'Time range',
         enum: ['1d', '7d', '30d', 'all']
       },
       detailed: {
         type: 'boolean',
-        description: '상세 정보 포함 여부 (기본값: false)'
+        description: 'Include detailed information (default: false)'
       }
     }
   },
@@ -58,7 +58,7 @@ export async function getUsageAnalytics(args: GetUsageAnalyticsArgs): Promise<To
     const { type = 'all', timeRange = 'all', detailed = false } = args;
     const memoryManager = MemoryManager.getInstance();
 
-    let output = '## Hi-AI 사용 분석\n\n';
+    let output = '## Hi-AI Usage Analytics\n\n';
 
     // Memory statistics
     if (type === 'memory' || type === 'all') {
@@ -71,10 +71,10 @@ export async function getUsageAnalytics(args: GetUsageAnalyticsArgs): Promise<To
     }
 
     // System info
-    output += `---\n### 시스템 정보\n\n`;
-    output += `- **Hi-AI 버전**: 2.0.0\n`;
-    output += `- **분석 시간**: ${new Date().toLocaleString('ko-KR')}\n`;
-    output += `- **시간 범위**: ${getTimeRangeLabel(timeRange)}\n`;
+    output += `---\n### System Information\n\n`;
+    output += `- **Hi-AI Version**: 2.0.0\n`;
+    output += `- **Analysis Time**: ${new Date().toLocaleString('en-US')}\n`;
+    output += `- **Time Range**: ${getTimeRangeLabel(timeRange)}\n`;
 
     return {
       content: [{
@@ -86,7 +86,7 @@ export async function getUsageAnalytics(args: GetUsageAnalyticsArgs): Promise<To
     return {
       content: [{
         type: 'text',
-        text: `✗ 분석 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `✗ Analysis error: ${error instanceof Error ? error.message : 'Unknown error'}`
       }]
     };
   }
@@ -100,25 +100,25 @@ async function generateMemoryStats(
   const stats = memoryManager.getStats();
   const allMemories = memoryManager.list();
 
-  let output = '### 메모리 통계\n\n';
-  output += `- **총 메모리 수**: ${stats.total}개\n`;
-  output += `- **카테고리 수**: ${Object.keys(stats.byCategory).length}개\n\n`;
+  let output = '### Memory Statistics\n\n';
+  output += `- **Total Memories**: ${stats.total}\n`;
+  output += `- **Category Count**: ${Object.keys(stats.byCategory).length}\n\n`;
 
   // Category distribution
-  output += `#### 카테고리별 분포\n\n`;
+  output += `#### Category Distribution\n\n`;
   const sortedCategories = Object.entries(stats.byCategory)
     .sort((a, b) => b[1] - a[1]);
 
   for (const [category, count] of sortedCategories) {
     const percentage = ((count / stats.total) * 100).toFixed(1);
     const bar = '█'.repeat(Math.round(count / stats.total * 20));
-    output += `- **${category}**: ${count}개 (${percentage}%) ${bar}\n`;
+    output += `- **${category}**: ${count} (${percentage}%) ${bar}\n`;
   }
   output += '\n';
 
   // Time analysis
   if (allMemories.length > 0) {
-    output += `#### 시간 분석\n\n`;
+    output += `#### Time Analysis\n\n`;
 
     const now = new Date();
     const filterDate = getFilterDate(timeRange);
@@ -139,10 +139,10 @@ async function generateMemoryStats(
       .slice(0, 7);
 
     if (sortedDays.length > 0) {
-      output += `**최근 일별 활동**:\n`;
+      output += `**Recent Daily Activity**:\n`;
       for (const [day, count] of sortedDays) {
         const bar = '▓'.repeat(Math.min(count, 20));
-        output += `- ${day}: ${count}개 ${bar}\n`;
+        output += `- ${day}: ${count} ${bar}\n`;
       }
       output += '\n';
     }
@@ -155,9 +155,9 @@ async function generateMemoryStats(
     }
 
     if (Object.keys(priorityCounts).length > 1) {
-      output += `**우선순위 분포**:\n`;
+      output += `**Priority Distribution**:\n`;
       for (const [priority, count] of Object.entries(priorityCounts).sort((a, b) => Number(b[0]) - Number(a[0]))) {
-        output += `- 우선순위 ${priority}: ${count}개\n`;
+        output += `- Priority ${priority}: ${count}\n`;
       }
       output += '\n';
     }
@@ -165,14 +165,14 @@ async function generateMemoryStats(
 
   // Detailed info
   if (detailed && allMemories.length > 0) {
-    output += `#### 상세 정보\n\n`;
+    output += `#### Detailed Information\n\n`;
 
     // Most recently accessed
     const byAccess = [...allMemories]
       .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime())
       .slice(0, 5);
 
-    output += `**최근 접근한 메모리**:\n`;
+    output += `**Recently Accessed Memories**:\n`;
     for (const memory of byAccess) {
       output += `- \`${memory.key}\` (${formatDate(memory.lastAccessed)})\n`;
     }
@@ -183,7 +183,7 @@ async function generateMemoryStats(
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
       .slice(0, 5);
 
-    output += `**가장 오래된 메모리**:\n`;
+    output += `**Oldest Memories**:\n`;
     for (const memory of oldest) {
       output += `- \`${memory.key}\` (${formatDate(memory.timestamp)})\n`;
     }
@@ -199,10 +199,10 @@ async function generateGraphStats(
 ): Promise<string> {
   const graph = memoryManager.getMemoryGraph();
 
-  let output = '### 지식 그래프 통계\n\n';
-  output += `- **노드 수**: ${graph.nodes.length}개\n`;
-  output += `- **관계 수**: ${graph.edges.length}개\n`;
-  output += `- **클러스터 수**: ${graph.clusters.length}개\n\n`;
+  let output = '### Knowledge Graph Statistics\n\n';
+  output += `- **Node Count**: ${graph.nodes.length}\n`;
+  output += `- **Relationship Count**: ${graph.edges.length}\n`;
+  output += `- **Cluster Count**: ${graph.clusters.length}\n\n`;
 
   if (graph.edges.length > 0) {
     // Relation type distribution
@@ -211,15 +211,15 @@ async function generateGraphStats(
       relationTypes[edge.relationType] = (relationTypes[edge.relationType] || 0) + 1;
     }
 
-    output += `#### 관계 유형 분포\n\n`;
+    output += `#### Relationship Type Distribution\n\n`;
     for (const [type, count] of Object.entries(relationTypes).sort((a, b) => b[1] - a[1])) {
-      output += `- **${type}**: ${count}개\n`;
+      output += `- **${type}**: ${count}\n`;
     }
     output += '\n';
 
     // Average connections per node
     const avgConnections = (graph.edges.length * 2 / graph.nodes.length).toFixed(2);
-    output += `- **평균 연결 수**: ${avgConnections}개/노드\n`;
+    output += `- **Average Connections**: ${avgConnections}/node\n`;
 
     // Most connected nodes
     const connectionCount: Record<string, number> = {};
@@ -233,9 +233,9 @@ async function generateGraphStats(
       .slice(0, 5);
 
     if (topConnected.length > 0) {
-      output += `\n**가장 많이 연결된 노드**:\n`;
+      output += `\n**Most Connected Nodes**:\n`;
       for (const [key, count] of topConnected) {
-        output += `- \`${key}\`: ${count}개 연결\n`;
+        output += `- \`${key}\`: ${count} connections\n`;
       }
       output += '\n';
     }
@@ -243,13 +243,13 @@ async function generateGraphStats(
 
   // Cluster info
   if (graph.clusters.length > 0 && detailed) {
-    output += `#### 클러스터 상세\n\n`;
+    output += `#### Cluster Details\n\n`;
     for (let i = 0; i < Math.min(graph.clusters.length, 5); i++) {
       const cluster = graph.clusters[i];
-      output += `**클러스터 ${i + 1}** (${cluster.length}개 노드):\n`;
+      output += `**Cluster ${i + 1}** (${cluster.length} nodes):\n`;
       output += `- ${cluster.slice(0, 5).join(', ')}`;
       if (cluster.length > 5) {
-        output += ` ... 외 ${cluster.length - 5}개`;
+        output += ` ... and ${cluster.length - 5} more`;
       }
       output += '\n';
     }
@@ -277,20 +277,20 @@ function getFilterDate(timeRange: string): Date | null {
 function getTimeRangeLabel(timeRange: string): string {
   switch (timeRange) {
     case '1d':
-      return '최근 24시간';
+      return 'Last 24 hours';
     case '7d':
-      return '최근 7일';
+      return 'Last 7 days';
     case '30d':
-      return '최근 30일';
+      return 'Last 30 days';
     default:
-      return '전체';
+      return 'All time';
   }
 }
 
 function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR');
+    return date.toLocaleDateString('en-US');
   } catch {
     return dateString;
   }

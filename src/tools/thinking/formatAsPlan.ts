@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const formatAsPlanDefinition: ToolDefinition = {
   name: 'format_as_plan',
-  description: '계획으로|정리해줘|체크리스트|format as plan|make a plan|organize this|checklist - Format content into clear plans',
+  description: 'format as plan|make a plan|organize this|checklist - Format content into clear plans',
   inputSchema: {
     type: 'object',
     properties: {

@@ -2,10 +2,11 @@
 // With ProjectCache for 25x performance improvement
 
 import { Node } from 'ts-morph';
-import * as path from 'path';
+import path from 'node:path';
 import { PythonParser } from '../../lib/PythonParser.js';
 import { ProjectCache } from '../../lib/ProjectCache.js';
 import { readFile } from 'fs/promises';
+import fastGlob from 'fast-glob';
 import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 interface SymbolInfo {
@@ -19,7 +20,7 @@ interface SymbolInfo {
 
 export const findSymbolDefinition: ToolDefinition = {
   name: 'find_symbol',
-  description: '함수 찾아|클래스 어디|변수 위치|find function|where is|locate - Find symbol definitions',
+  description: 'find function|where is|locate class|find variable|symbol search - Find symbol definitions',
   inputSchema: {
     type: 'object',
     properties: {
@@ -57,9 +58,10 @@ export async function findSymbol(args: {
 
     const symbols: SymbolInfo[] = [];
 
-    // Check for Python files
-    const glob = await import('glob');
-    const pythonFiles = glob.globSync(path.join(projectPath, '**/*.py'), {
+    // Check for Python files using fast-glob for better performance
+    const pythonFiles = await fastGlob(['**/*.py'], {
+      cwd: projectPath,
+      absolute: true,
       ignore: ['**/node_modules/**', '**/.git/**', '**/venv/**', '**/__pycache__/**']
     });
 

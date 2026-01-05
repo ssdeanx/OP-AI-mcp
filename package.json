@@ -1,26 +1,29 @@
 {
-  "name": "@su-record/hi-ai",
-  "version": "2.1.0",
+  "name": "@ssdeanx/OP-AI",
+  "version": "3.0.0",
   "description": "Model Context Protocol based AI development assistant with 35 specialized tools featuring Knowledge Graph memory, session context auto-injection, and code dependency analysis",
-  "displayName": "Hi-AI",
+  "displayName": "Op-AI",
   "icon": "https://raw.githubusercontent.com/su-record/hi-ai/main/icon.png",
-  "homepage": "https://github.com/su-record/hi-ai",
+  "homepage": "https://github.com/ssdeanx/OP-AI-mcp",
   "repository": {
     "type": "git",
-    "url": "https://github.com/su-record/hi-ai.git"
+    "url": "https://github.com/ssdeanx/OP-AI-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/su-record/hi-ai/issues"
+    "url": "https://github.com/ssdeanx/OP-AI-mcp/issues"
   },
   "main": "dist/index.js",
   "module": "./src/index.ts",
   "type": "module",
   "bin": {
-    "hi-ai": "dist/index.js"
+    "hi-ai": "dist/index.js",
+    "op-ai": "dist/index.js"
   },
   "scripts": {
     "dev": "npm run build && node dist/index.js",
     "build": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -45,22 +48,37 @@
     "claude",
     "anthropic"
   ],
-  "author": "Su",
+  "author": "ssdeanx",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "@smithery/sdk": "^1.6.8",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@smithery/sdk": "^2.1.0",
+    "@tensorflow-models/universal-sentence-encoder": "^1.3.3",
+    "@tensorflow/tfjs-node": "^4.22.0",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/glob": "^8.1.0",
-    "better-sqlite3": "^12.4.1",
-    "chalk": "^5.3.0",
-    "glob": "^11.0.3",
-    "ts-morph": "^26.0.0"
+    "better-sqlite3": "^12.5.0",
+    "chalk": "^5.6.2",
+    "fast-glob": "^3.3.3",
+    "fastembed": "^2.1.0",
+    "glob": "^13.0.0",
+    "re2": "^1.23.0",
+    "ts-morph": "^27.0.2"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@vitest/ui": "^4.0.9",
-    "typescript": "^5.5.4",
-    "vitest": "^4.0.9"
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.19.3",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
+    "@vitest/ui": "^4.0.16",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.51.0",
+    "vitest": "^4.0.16"
+  },
+  "overrides": {
+    "qs": "^6.14.1",
+    "body-parser": "^2.2.1",
+    "lodash": "^4.17.21",
+    "eslint": "^9.39.2"
   }
 }

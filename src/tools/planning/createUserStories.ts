@@ -17,7 +17,7 @@ interface UserStory {
 
 export const createUserStoriesDefinition: ToolDefinition = {
   name: 'create_user_stories',
-  description: '스토리|사용자 스토리|user story|user stories|as a user - Generate user stories from requirements',
+  description: 'user story|user stories|as a user - Generate user stories from requirements',
   inputSchema: {
     type: 'object',
     properties: {

@@ -88,8 +88,8 @@ export class ContextCompressor {
     // Select chunks until target size
     // TOKENS_PER_CHAR_ESTIMATE = 0.25 means 1 char ≈ 0.25 tokens, so 4 chars ≈ 1 token
     // Reserve space for headers and formatting (5% overhead, min 50 chars, max 300 chars)
-    const HEADER_OVERHEAD = Math.max(50, Math.min(300, targetTokens * 4 * 0.05));
-    const targetChars = (targetTokens * 4) - HEADER_OVERHEAD;
+    const HEADER_OVERHEAD = Math.max(50, Math.min(300, targetTokens * (1 / this.TOKENS_PER_CHAR_ESTIMATE) * 0.05));
+    const targetChars = (targetTokens / this.TOKENS_PER_CHAR_ESTIMATE) - HEADER_OVERHEAD;
 
     const selected: ChunkScore[] = [];
     const removed: string[] = [];
@@ -279,7 +279,7 @@ export class ContextCompressor {
     if (text.length < 200 && text.split('\n').length <= 5) score += 10;
 
     // Boost structured content (lists)
-    if (text.match(/^[\d\-\*•]/m)) score += 15;
+    if (text.match(/^[\d\-\\*•]/m)) score += 15;
 
     // Boost code blocks
     if (text.includes('```')) score += 20;
@@ -390,7 +390,7 @@ export class ContextCompressor {
 
     const files = Array.from(
       new Set(
-        context.match(/[\w\-]+\.[a-z]{2,4}\b/gi) || []
+        context.match(/[\w\\-]+\.[a-z]{2,4}\b/gi) || []
       )
     );
 
@@ -403,6 +403,6 @@ export class ContextCompressor {
   public static estimateTokens(text: string): number {
     // GPT-like tokenization: ~1 token per 4 characters
     // More accurate would require actual tokenizer
-    return Math.ceil(text.length / 4);
+    return Math.ceil(text.length * this.TOKENS_PER_CHAR_ESTIMATE);
   }
 }

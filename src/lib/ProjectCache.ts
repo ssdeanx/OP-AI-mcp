@@ -43,7 +43,7 @@ export class ProjectCache {
       return cached.project;
     }
 
-    // Remove expired entries
+    // Remove expired entries and forget nodes to free memory
     this.removeExpired();
 
     // LRU eviction if cache is full
@@ -51,19 +51,28 @@ export class ProjectCache {
       this.evictLRU();
     }
 
-    // Create new project
+    // Create new project with optimized settings
     const project = new Project({
       useInMemoryFileSystem: false,
       compilerOptions: {
         allowJs: true,
         skipLibCheck: true,
-        noEmit: true
-      }
+        noEmit: true,
+        incremental: true, // Enable incremental compilation for better performance
+        tsBuildInfoFile: undefined // Disable build info file
+      },
+      skipAddingFilesFromTsConfig: true // Manually add files for better control
     });
 
-    // Add source files
+    // Add source files with error handling
     const pattern = path.join(normalizedPath, '**/*.{ts,tsx,js,jsx}');
-    project.addSourceFilesAtPaths(pattern);
+    try {
+      project.addSourceFilesAtPaths(pattern);
+    } catch (error) {
+      console.warn(`Error adding source files for ${normalizedPath}:`, error);
+      // Return empty project if file addition fails
+      return project;
+    }
 
     const sourceFiles = project.getSourceFiles();
     const fileCount = sourceFiles.length;
@@ -154,6 +163,13 @@ export class ProjectCache {
     });
 
     if (oldestPath) {
+      const cached = this.cache.get(oldestPath);
+      if (cached) {
+        // Forget all source files to free memory (ts-morph performance optimization)
+        cached.project.getSourceFiles().forEach(sourceFile => {
+          sourceFile.forget();
+        });
+      }
       this.cache.delete(oldestPath);
     }
   }

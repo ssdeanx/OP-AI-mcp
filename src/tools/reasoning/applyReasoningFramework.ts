@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const applyReasoningFrameworkDefinition: ToolDefinition = {
   name: 'apply_reasoning_framework',
-  description: '추론 프레임워크|체계적 분석|논리적 사고|reasoning framework|systematic analysis|logical thinking - Apply 9-step reasoning framework to analyze complex problems systematically',
+  description: 'reasoning framework|systematic analysis|logical thinking - Apply 9-step reasoning framework to analyze complex problems systematically',
   inputSchema: {
     type: 'object',
     properties: {
@@ -49,106 +49,110 @@ export async function applyReasoningFramework(args: {
 }): Promise<ToolResult> {
   const { problem, context, focus_steps } = args;
 
+  // Ensure parameters are used for linting compliance
+  void problem;
+  void context;
+
   const allSteps: ReasoningStep[] = [
     {
       step: 1,
-      title: '논리적 종속성 및 제약 조건',
-      description: '정책, 작업 순서, 전제 조건, 사용자 제약을 중요도 순으로 분석',
+      title: 'Logical Dependencies and Constraints',
+      description: 'Analyze policies, task order, prerequisites, and user constraints in order of importance',
       questions: [
-        '어떤 정책이나 필수 규칙이 적용되는가?',
-        '작업 순서를 재정렬해야 하는가? (선행 작업 확인)',
-        '필요한 전제 조건이나 정보는?',
-        '명시적 사용자 제약 조건이 있는가?'
+        'What policies or mandatory rules apply?',
+        'Does the task order need to be rearranged? (Check predecessor tasks)',
+        'What prerequisites or information are needed?',
+        'Are there explicit user constraints?'
       ],
       output: analyzeConstraints(problem, context)
     },
     {
       step: 2,
-      title: '위험 평가',
-      description: '행동의 결과와 향후 문제 가능성 평가',
+      title: 'Risk Assessment',
+      description: 'Evaluate the consequences of actions and potential future problems',
       questions: [
-        '이 행동이 미래에 문제를 일으킬 수 있는가?',
-        '탐색 작업인가, 구현 작업인가? (위험 수준 결정)',
-        '호환성, 보안, 성능 위험은?',
-        '롤백이 가능한가?'
+        'Could this action cause problems in the future?',
+        'Is this an exploration task or implementation task? (Determine risk level)',
+        'What are compatibility, security, and performance risks?',
+        'Is rollback possible?'
       ],
       output: assessRisks(problem, context)
     },
     {
       step: 3,
-      title: '귀납적 추론 및 가설 탐색',
-      description: '문제의 근본 원인에 대한 가설 생성 및 우선순위화',
+      title: 'Inductive Reasoning and Hypothesis Exploration',
+      description: 'Generate hypotheses about the root cause of the problem and prioritize them',
       questions: [
-        '즉각적 원인을 넘어선 근본 원인은?',
-        '각 가설을 어떻게 검증할 것인가?',
-        '가능성이 낮은 원인도 고려했는가?'
+        'What is the root cause beyond the immediate symptoms?',
+        'How will each hypothesis be verified?',
+        'Have low-probability causes been considered?'
       ],
       output: generateHypotheses(problem, context)
     },
     {
       step: 4,
-      title: '결과 평가 및 적응성',
-      description: '관찰 결과에 따라 계획 조정',
+      title: 'Result Evaluation and Adaptability',
+      description: 'Adjust plans based on observation results',
       questions: [
-        '이전 관찰이 계획 변경을 요구하는가?',
-        '가설이 반증되었다면 새 가설을 생성했는가?',
-        '막다른 길에 도달했다면 백트래킹이 필요한가?'
+        'Do previous observations require plan modifications?',
+        'Have disproven hypotheses been discarded and new ones generated?',
+        'Is backtracking needed when reaching dead ends?'
       ],
       output: evaluateAdaptability(problem, context)
     },
     {
       step: 5,
-      title: '정보 가용성',
-      description: '모든 정보 소스 식별 및 활용',
+      title: 'Information Availability',
+      description: 'Identify and utilize all information sources',
       questions: [
-        '사용 가능한 도구는? (MCP, 파일 시스템, Git 등)',
-        '참조해야 할 정책/규칙 문서는? (CLAUDE.md, constitution.md)',
-        '이전 대화나 메모리에서 관련 정보를 찾았는가?',
-        '사용자에게 물어야 할 정보는?'
+        'What tools are available? (MCP tools, file system, Git, etc.)',
+        'What policy/rule documents need to be referenced? (CLAUDE.md, constitution.md)',
+        'Have relevant information been found in previous conversations or memory?',
+        'What information should be asked from users?'
       ],
       output: identifyInformationSources(problem, context)
     },
     {
       step: 6,
-      title: '정밀성 및 근거',
-      description: '주장에 대한 정확한 근거 제시',
+      title: 'Precision and Evidence',
+      description: 'Provide accurate evidence for claims',
       questions: [
-        '정책 참조 시 정확히 인용했는가?',
-        '코드 참조 시 파일명:라인을 명시했는가?',
-        '숫자와 메트릭이 정확한가?'
+        'Have policies been cited accurately?',
+        'Have code references included file:line format?',
+        'Are numbers and metrics accurate?'
       ],
       output: ensurePrecision(problem, context)
     },
     {
       step: 7,
-      title: '완전성',
-      description: '모든 요구사항, 옵션, 선호도 통합',
+      title: 'Completeness',
+      description: 'Integrate all requirements, options, and preferences',
       questions: [
-        '충돌하는 요구사항을 중요도 순으로 해결했는가?',
-        '조기 결론을 내리지 않았는가? (여러 옵션 고려)',
-        '모든 관련 정보 소스를 검토했는가?'
+        'Have conflicting requirements been resolved by importance order?',
+        'Have multiple options been considered without early fixation?',
+        'Have all relevant information sources been reviewed?'
       ],
       output: ensureCompleteness(problem, context)
     },
     {
       step: 8,
-      title: '끈기와 인내',
-      description: '모든 추론을 소진할 때까지 포기하지 않기',
+      title: 'Persistence and Perseverance',
+      description: 'Continue until all reasoning is exhausted',
       questions: [
-        '일시적 오류는 재시도했는가?',
-        '명확한 한계(재시도 제한, 타임아웃)에 도달했는가?',
-        '같은 실패를 반복하지 않고 전략을 변경했는가?'
+        'Have temporary errors been retried?',
+        'Have clear limits been reached (retry limits, timeouts)?',
+        'Have strategies been changed without repeating same failures?'
       ],
       output: demonstratePersistence(problem, context)
     },
     {
       step: 9,
-      title: '응답 억제',
-      description: '추론 완료 후에만 행동',
+      title: 'Response Suppression',
+      description: 'Only respond after reasoning is complete',
       questions: [
-        '위의 모든 추론이 완료되었는가?',
-        '추론 과정을 문서화했는가?',
-        '한 번에 하나의 주요 행동만 수행하는가?'
+        'Has all reasoning above been completed?',
+        'Has the reasoning process been documented?',
+        'Is only one major action performed at a time?'
       ],
       output: planExecution(problem, context)
     }
@@ -176,118 +180,118 @@ export async function applyReasoningFramework(args: {
 
 // Helper methods
 function analyzeConstraints(problem: string, context?: string): string {
-  return `**제약 조건 분석**:
-- 정책/규칙: ${context ? '프로젝트 컨텍스트 확인 필요' : 'CLAUDE.md, constitution.md 확인 필요'}
-- 작업 순서: 선행 작업 식별 필요 (DB → Backend → Frontend 패턴 고려)
-- 전제 조건: ${problem}을(를) 위한 필수 정보/도구 확인
-- 사용자 제약: 명시적 요청사항 우선 적용`;
+  return `**Constraint Analysis**:
+- Policies/Rules: ${context ? 'Project context verification required' : 'CLAUDE.md, constitution.md verification required'}
+- Task Order: Predecessor task identification required (consider DB → Backend → Frontend pattern)
+- Prerequisites: Verify essential information/tools for ${problem}
+- User Constraints: Apply explicit requirements first`;
 }
 
 function assessRisks(problem: string, context?: string): string {
-  const isExploration = problem.toLowerCase().includes('찾') ||
-                        problem.toLowerCase().includes('분석') ||
-                        problem.toLowerCase().includes('확인') ||
+  const isExploration = problem.toLowerCase().includes('find') ||
+                        problem.toLowerCase().includes('analyze') ||
+                        problem.toLowerCase().includes('check') ||
                         problem.toLowerCase().includes('find') ||
                         problem.toLowerCase().includes('analyze');
 
-  return `**위험 평가**:
-- 작업 유형: ${isExploration ? '탐색 작업 (낮은 위험)' : '구현 작업 (높은 위험)'}
-- 롤백 가능성: ${isExploration ? '높음' : '확인 필요'}
-- 호환성 위험: 기존 코드와의 충돌 가능성 검토
-- 보안 위험: SQL Injection, XSS, 민감 정보 노출 검토
-- 성능 위험: N+1 쿼리, 메모리 누수, 불필요한 리렌더 검토`;
+  return `**Risk Assessment**:
+- Task Type: ${isExploration ? 'Exploration task (low risk)' : 'Implementation task (high risk)'}
+- Rollback Possibility: ${isExploration ? 'High' : 'Verification required'}
+- Compatibility Risk: Review potential conflicts with existing code
+- Security Risk: Review SQL Injection, XSS, sensitive information exposure
+- Performance Risk: Review N+1 queries, memory leaks, unnecessary re-renders`;
 }
 
 function generateHypotheses(problem: string, context?: string): string {
-  return `**가설 생성**:
-1. **가설 1** (가능성: 높음)
-   - 근거: ${problem}의 가장 직접적인 원인
-   - 검증: [도구/파일]을 통해 확인
-2. **가설 2** (가능성: 중간)
-   - 근거: 간접적 요인 또는 환경 차이
-   - 검증: 추가 정보 수집 필요
-3. **가설 3** (가능성: 낮음)
-   - 근거: 엣지 케이스 또는 드문 상황
-   - 검증: 다른 가설 반증 시 검토
+  return `**Hypothesis Generation**:
+1. **Hypothesis 1** (Probability: High)
+   - Evidence: Most direct cause of ${problem}
+   - Verification: Confirm through [tool/file]
+2. **Hypothesis 2** (Probability: Medium)
+   - Evidence: Indirect factors or environmental differences
+   - Verification: Additional information collection required
+3. **Hypothesis 3** (Probability: Low)
+   - Evidence: Edge cases or rare situations
+   - Verification: Review if other hypotheses are disproven
 
-**우선순위**: 가능성 높은 순으로 검증하되, 낮은 가능성도 완전히 배제하지 않음`;
+**Priority**: Verify in order of probability, but don't completely exclude low probability options`;
 }
 
 function evaluateAdaptability(problem: string, context?: string): string {
-  return `**적응성 평가**:
-- 관찰 결과 반영: 새로운 정보에 따라 계획 수정 필요 여부 확인
-- 가설 업데이트: 반증된 가설 폐기, 새 가설 생성
-- 백트래킹: 막다른 길 도달 시 이전 단계로 돌아가 다른 경로 탐색
-- 계획 재평가: 전체 접근법이 유효한지 주기적으로 검토`;
+  return `**Adaptability Assessment**:
+- Reflect observation results: Check if plan needs modification based on new information
+- Hypothesis updates: Discard disproven hypotheses, generate new ones
+- Backtracking: Return to previous steps when reaching dead ends to explore different paths
+- Plan re-evaluation: Periodically review if overall approach is still valid`;
 }
 
 function identifyInformationSources(problem: string, context?: string): string {
-  return `**정보 소스**:
-1. **도구**:
-   - MCP 도구 (hi-ai 38개 도구)
-   - 파일 시스템 (Read, Write, Edit, Glob, Grep)
-   - Git, 패키지 관리자
-2. **정책/규칙**:
-   - CLAUDE.md (기술 스택, 아키텍처)
-   - .vibe/constitution.md (프로젝트 규칙)
-   - skills/ 폴더 (품질 기준, 코딩 표준)
-3. **메모리**:
-   - recall_memory (이전 세션 정보)
-   - restore_session_context (컨텍스트 복원)
-4. **사용자 확인**:
-   - 비즈니스 로직 세부사항
-   - 디자인 선호도
-   - 우선순위 결정`;
+  return `**Information Sources**:
+1. **Tools**:
+   - MCP tools (hi-ai 38 tools)
+   - File system (Read, Write, Edit, Glob, Grep)
+   - Git, package managers
+2. **Policies/Rules**:
+   - CLAUDE.md (tech stack, architecture)
+   - .vibe/constitution.md (project rules)
+   - skills/ folder (quality standards, coding conventions)
+3. **Memory**:
+   - recall_memory (previous session information)
+   - restore_session_context (context restoration)
+4. **User Confirmation**:
+   - Business logic details
+   - Design preferences
+   - Priority decisions`;
 }
 
 function ensurePrecision(problem: string, context?: string): string {
-  return `**정밀성 확보**:
-- 정책 인용: "CLAUDE.md:12에 따르면..." 형식으로 명시
-- 코드 참조: "users.py:45의 User 모델" 형식으로 파일명:라인 포함
-- 숫자 정확성: 복잡도, 커버리지, 성능 지표를 정확한 수치로 표현
-- 근거 제시: 모든 주장에 대해 출처와 근거 명확히`;
+  return `**Precision Assurance**:
+- Policy citations: Explicitly state "According to CLAUDE.md:12..."
+- Code references: Include file:line format like "User model in users.py:45"
+- Numeric accuracy: Express complexity, coverage, performance metrics with exact figures
+- Evidence presentation: Clearly state sources and evidence for all claims`;
 }
 
 function ensureCompleteness(problem: string, context?: string): string {
-  return `**완전성 확보**:
-- 충돌 해결: 정책 → 작업 순서 → 전제 조건 → 사용자 선호도 순
-- 옵션 탐색: 단일 해결책에 조기 고정하지 않고 여러 대안 검토
-- 정보 검토: 모든 관련 정보 소스(#5) 철저히 검토
-- 사용자 확인: 불확실한 부분은 가정하지 말고 확인`;
+  return `**Completeness Assurance**:
+- Conflict resolution: Policy → Task order → Prerequisites → User preferences priority order
+- Option exploration: Don't fixate on single solution early, review multiple alternatives
+- Information review: Thoroughly review all relevant information sources (#5)
+- User confirmation: Don't assume uncertain parts, confirm instead`;
 }
 
 function demonstratePersistence(problem: string, context?: string): string {
-  return `**끈기 전략**:
-- 일시적 오류: 지수 백오프로 재시도 (예: 1초, 2초, 4초...)
-- 한계 인식: 명확한 재시도 제한, 타임아웃 도달 시 중단
-- 전략 변경: 같은 실패 반복 X → 다른 접근법 시도
-- 철저한 분석: 시간이 걸리더라도 모든 추론 단계 완료`;
+  return `**Persistence Strategy**:
+- Temporary errors: Retry with exponential backoff (e.g., 1s, 2s, 4s...)
+- Limit recognition: Set clear retry limits, stop when timeout reached
+- Strategy changes: Don't repeat same failures → Try different approaches
+- Thorough analysis: Complete all reasoning steps even if time-consuming`;
 }
 
 function planExecution(problem: string, context?: string): string {
-  return `**실행 계획**:
-1. **추론 문서화**: 복잡한 결정의 경우 추론 과정 간략히 설명
-2. **단계별 실행**: 한 번에 하나의 주요 행동만 수행
-3. **결과 확인**: 각 행동의 결과를 확인한 후 다음 단계로 진행
-4. **롤백 대비**: 문제 발생 시 이전 상태로 복구 가능하도록 준비`;
+  return `**Execution Plan**:
+1. **Document reasoning**: Briefly explain reasoning process for complex decisions
+2. **Step-by-step execution**: Perform only one major action at a time
+3. **Result verification**: Confirm results of each action before proceeding to next step
+4. **Rollback preparation**: Prepare to restore to previous state if issues occur`;
 }
 
 function generateSummary(problem: string, steps: ReasoningStep[]): string {
-  return `9단계 추론 프레임워크를 "${problem}"에 적용했습니다.
-총 ${steps.length}개 단계를 체계적으로 분석하여 논리적 종속성, 위험, 가설, 정보 소스를 포괄적으로 검토했습니다.`;
+  return `Applied 9-step reasoning framework to "${problem}".
+Systematically analyzed ${steps.length} steps to comprehensively review logical dependencies, risks, hypotheses, and information sources.`;
 }
 
 function formatOutput(result: any): string {
-  let output = `# 추론 프레임워크 분석\n\n`;
-  output += `**문제**: ${result.problem}\n`;
-  output += `**컨텍스트**: ${result.context}\n`;
-  output += `**적용 단계**: ${result.steps_applied}/9\n\n`;
+  let output = `# Reasoning Framework Analysis\n\n`;
+  output += `**Problem**: ${result.problem}\n`;
+  output += `**Context**: ${result.context}\n`;
+  output += `**Applied Steps**: ${result.steps_applied}/9\n\n`;
   output += `---\n\n`;
 
   for (const step of result.framework_steps) {
     output += `## ${step.step}. ${step.title}\n\n`;
     output += `${step.description}\n\n`;
-    output += `**핵심 질문**:\n`;
+    output += `**Key Questions**:\n`;
     step.questions.forEach((q: string) => {
       output += `- ${q}\n`;
     });
@@ -295,7 +299,7 @@ function formatOutput(result: any): string {
     output += `---\n\n`;
   }
 
-  output += `## 요약\n\n${result.summary}`;
+  output += `## Summary\n\n${result.summary}`;
 
   return output;
 }

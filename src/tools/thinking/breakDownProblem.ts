@@ -20,7 +20,7 @@ interface SubProblem {
 
 export const breakDownProblemDefinition: ToolDefinition = {
   name: 'break_down_problem',
-  description: '나눠서|단계별로|세분화|break down|divide|split into parts - Break complex problems into sub-problems',
+  description: 'break down|divide|split into parts - Break complex problems into sub-problems',
   inputSchema: {
     type: 'object',
     properties: {
@@ -58,7 +58,7 @@ export async function breakDownProblem(args: { problem: string; maxDepth?: numbe
       funcs.forEach((f, i) => {
         codeStructureSubProblems!.push({
           id: `codeFunc${i+1}`,
-          title: `함수 분석: ${f.getName() || '익명함수'}`,
+          title: `Function analysis: ${f.getName() || 'anonymous function'}`,
           description: f.getText().slice(0, 100) + (f.getText().length > 100 ? '...' : ''),
           complexity: 'medium',
           priority: 'high',
@@ -68,7 +68,7 @@ export async function breakDownProblem(args: { problem: string; maxDepth?: numbe
       classes.forEach((c, i) => {
         codeStructureSubProblems!.push({
           id: `codeClass${i+1}`,
-          title: `클래스 분석: ${c.getName() || '익명클래스'}`,
+          title: `Class analysis: ${c.getName() || 'anonymous class'}`,
           description: c.getText().slice(0, 100) + (c.getText().length > 100 ? '...' : ''),
           complexity: 'high',
           priority: 'high',
@@ -78,7 +78,7 @@ export async function breakDownProblem(args: { problem: string; maxDepth?: numbe
       vars.forEach((v, i) => {
         codeStructureSubProblems!.push({
           id: `codeVar${i+1}`,
-          title: `변수 분석: ${v.getName()}`,
+          title: `Variable analysis: ${v.getName()}`,
           description: v.getText().slice(0, 100) + (v.getText().length > 100 ? '...' : ''),
           complexity: 'low',
           priority: 'medium',

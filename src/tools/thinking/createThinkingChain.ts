@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const createThinkingChainDefinition: ToolDefinition = {
   name: 'create_thinking_chain',
-  description: '생각 과정|사고 흐름|연쇄적으로|thinking process|chain of thought|reasoning chain - Create sequential thinking chain',
+  description: 'thinking process|chain of thought|reasoning chain - Create sequential thinking chain',
   inputSchema: {
     type: 'object',
     properties: {

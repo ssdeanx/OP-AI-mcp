@@ -4,7 +4,7 @@ import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 export const analyzePromptDefinition: ToolDefinition = {
   name: 'analyze_prompt',
-  description: '프롬프트 분석|평가|점수|얼마나 좋은지|analyze prompt|rate this|score|how good|prompt quality - Analyze prompt quality',
+  description: 'analyze prompt|rate this|score|how good|prompt quality|evaluate - Analyze prompt quality',
   inputSchema: {
     type: 'object',
     properties: {
@@ -41,17 +41,17 @@ export async function analyzePrompt(args: { prompt: string; criteria?: string[] 
     
     if (prompt.length < 20) {
       clarityScore -= 2.0;
-      clarityFeedback.push('프롬프트가 너무 짧습니다');
+      clarityFeedback.push('Prompt is too short');
     }
     
-    if (prompt.includes('?') || /\b(해주세요|부탁|요청)\b/.test(prompt)) {
+    if (prompt.includes('?') || /\b(please|help|request)\b/i.test(prompt)) {
       clarityScore += 2.0;
-      clarityFeedback.push('명확한 요청 형태 ✓');
+      clarityFeedback.push('Clear request form ✓');
     }
     
     if (prompt.split(',').length > 5 || prompt.split('.').length > 10) {
       clarityScore -= 1.0;
-      clarityFeedback.push('문장이 너무 복잡합니다');
+      clarityFeedback.push('Sentences are too complex');
     }
     
     scores.clarity = Math.max(0, Math.min(10, clarityScore));
@@ -63,22 +63,22 @@ export async function analyzePrompt(args: { prompt: string; criteria?: string[] 
     let specificityScore = 5.0;
     const specificityFeedback: string[] = [];
     
-    const specificKeywords = ['구체적', '정확히', '예시', '예를 들어'];
+    const specificKeywords = ['specific', 'exactly', 'example', 'for example'];
     const hasSpecificWords = specificKeywords.some(word => prompt.includes(word));
     if (hasSpecificWords) {
       specificityScore += 2.0;
-      specificityFeedback.push('구체적인 표현 사용 ✓');
+      specificityFeedback.push('Using specific expressions ✓');
     }
     
-    const techTerms = /\b(JavaScript|Python|React|Node\.js|API|데이터베이스)\b/i;
+    const techTerms = /\b(JavaScript|Python|React|Node\.js|API|database)\b/i;
     if (techTerms.test(prompt)) {
       specificityScore += 2.0;
-      specificityFeedback.push('기술 용어 포함 ✓');
+      specificityFeedback.push('Technical terms included ✓');
     }
     
     if (!prompt.match(/\d+/) && prompt.length > 50) {
       specificityScore -= 1.0;
-      specificityFeedback.push('수치나 구체적 데이터 부족');
+      specificityFeedback.push('Lack of specific numbers or data');
     }
     
     scores.specificity = Math.max(0, Math.min(10, specificityScore));
@@ -90,19 +90,19 @@ export async function analyzePrompt(args: { prompt: string; criteria?: string[] 
     let contextScore = 5.0;
     const contextFeedback: string[] = [];
     
-    const contextKeywords = ['배경', '목적', '이유', '상황', '현재', '문제'];
+    const contextKeywords = ['background', 'purpose', 'reason', 'situation', 'current', 'problem'];
     const contextCount = contextKeywords.filter(word => prompt.includes(word)).length;
     contextScore += contextCount * 1.5;
     
     if (contextCount > 0) {
-      contextFeedback.push(`배경 정보 포함 (${contextCount}개 키워드) ✓`);
+      contextFeedback.push(`Background information included (${contextCount} keywords) ✓`);
     } else {
-      contextFeedback.push('배경 정보 부족');
+      contextFeedback.push('Missing background information');
     }
     
     if (prompt.split('\n').length > 2) {
       contextScore += 1.0;
-      contextFeedback.push('구조화된 설명 ✓');
+      contextFeedback.push('Structured description ✓');
     }
     
     scores.context = Math.max(0, Math.min(10, contextScore));
@@ -116,17 +116,17 @@ export async function analyzePrompt(args: { prompt: string; criteria?: string[] 
     
     if (prompt.includes('\n')) {
       structureScore += 2.0;
-      structureFeedback.push('줄바꿈 사용 ✓');
+      structureFeedback.push('Using line breaks ✓');
     }
     
     if (/[1-9]\.|[-•]/.test(prompt)) {
       structureScore += 2.0;
-      structureFeedback.push('목록 형식 사용 ✓');
+      structureFeedback.push('Using list format ✓');
     }
     
     if (prompt.includes('**') || prompt.includes('##')) {
       structureScore += 1.0;
-      structureFeedback.push('마크다운 형식 사용 ✓');
+      structureFeedback.push('Using markdown format ✓');
     }
     
     scores.structure = Math.max(0, Math.min(10, structureScore));
@@ -140,26 +140,26 @@ export async function analyzePrompt(args: { prompt: string; criteria?: string[] 
   const recommendations: string[] = [];
   
   if (scores.clarity < 6) {
-    recommendations.push('💡 질문이나 요청을 더 명확하게 표현하세요');
+    recommendations.push('💡 Express your question or request more clearly');
   }
   if (scores.specificity < 6) {
-    recommendations.push('💡 구체적인 예시나 기술 사양을 추가하세요');
+    recommendations.push('💡 Add specific examples or technical specifications');
   }
   if (scores.context < 6) {
-    recommendations.push('💡 작업의 배경과 목적을 설명하세요');
+    recommendations.push('💡 Explain the background and purpose of the task');
   }
   if (scores.structure < 6) {
-    recommendations.push('💡 번호나 불릿 포인트로 구조화하세요');
+    recommendations.push('💡 Structure with numbered or bullet points');
   }
   
   // Identify strengths and weaknesses
   const strengths = Object.entries(scores)
     .filter(([_, score]) => score >= 7)
-    .map(([category, score]) => `✨ ${category}: 우수함 (${score.toFixed(1)}/10)`);
+    .map(([category, score]) => `✨ ${category}: Excellent (${score.toFixed(1)}/10)`);
     
   const weaknesses = Object.entries(scores)
     .filter(([_, score]) => score < 5)
-    .map(([category, score]) => `⚠️ ${category}: 개선 필요 (${score.toFixed(1)}/10)`);
+    .map(([category, score]) => `⚠️ ${category}: Needs Improvement (${score.toFixed(1)}/10)`);
   
   const analysis = {
     action: 'analyze_prompt',

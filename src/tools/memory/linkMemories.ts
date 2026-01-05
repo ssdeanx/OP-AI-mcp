@@ -5,38 +5,38 @@ import { MemoryManager } from '../../lib/MemoryManager.js';
 
 export const linkMemoriesDefinition: ToolDefinition = {
   name: 'link_memories',
-  description: `메모리 간 관계를 연결합니다 (지식 그래프).
+  description: `Link relationships between memories (knowledge graph).
 
-키워드: 연결해, 관계 설정, 링크, connect memories, link, relate
+Keywords: connect, link, relate, connect memories
 
-사용 예시:
-- "project-architecture와 design-patterns를 연결해"
-- "이 두 메모리를 related_to로 링크해"`,
+Usage examples:
+- "Connect project-architecture with design-patterns"
+- "Link these two memories as related_to"`,
   inputSchema: {
     type: 'object',
     properties: {
       sourceKey: {
         type: 'string',
-        description: '소스 메모리 키'
+        description: 'Source memory key'
       },
       targetKey: {
         type: 'string',
-        description: '타겟 메모리 키'
+        description: 'Target memory key'
       },
       relationType: {
         type: 'string',
-        description: '관계 유형 (related_to, depends_on, implements, extends, uses)',
+        description: 'Relation type (related_to, depends_on, implements, extends, uses)',
         enum: ['related_to', 'depends_on', 'implements', 'extends', 'uses', 'references', 'part_of']
       },
       strength: {
         type: 'number',
-        description: '관계 강도 (0.0 ~ 1.0, 기본값: 1.0)',
+        description: 'Relationship strength (0.0 ~ 1.0, default: 1.0)',
         minimum: 0,
         maximum: 1
       },
       bidirectional: {
         type: 'boolean',
-        description: '양방향 관계 여부 (기본값: false)'
+        description: 'Bidirectional relationship (default: false)'
       }
     },
     required: ['sourceKey', 'targetKey', 'relationType']
@@ -72,7 +72,7 @@ export async function linkMemories(args: LinkMemoriesArgs): Promise<ToolResult> 
       return {
         content: [{
           type: 'text',
-          text: `✗ 소스 메모리를 찾을 수 없습니다: ${sourceKey}`
+          text: `✗ Source memory not found: ${sourceKey}`
         }]
       };
     }
@@ -81,7 +81,7 @@ export async function linkMemories(args: LinkMemoriesArgs): Promise<ToolResult> 
       return {
         content: [{
           type: 'text',
-          text: `✗ 타겟 메모리를 찾을 수 없습니다: ${targetKey}`
+          text: `✗ Target memory not found: ${targetKey}`
         }]
       };
     }
@@ -93,7 +93,7 @@ export async function linkMemories(args: LinkMemoriesArgs): Promise<ToolResult> 
       return {
         content: [{
           type: 'text',
-          text: `✗ 관계 연결에 실패했습니다`
+          text: `✗ Failed to create relationship`
         }]
       };
     }
@@ -103,15 +103,15 @@ export async function linkMemories(args: LinkMemoriesArgs): Promise<ToolResult> 
       memoryManager.linkMemories(targetKey, sourceKey, relationType, strength);
     }
 
-    const result = `✓ 메모리 관계가 연결되었습니다
+    const result = `✓ Memory relationship linked
 
-**소스**: ${sourceKey}
-**타겟**: ${targetKey}
-**관계 유형**: ${relationType}
-**강도**: ${strength}
-**양방향**: ${bidirectional ? '예' : '아니오'}
+**Source**: ${sourceKey}
+**Target**: ${targetKey}
+**Relation Type**: ${relationType}
+**Strength**: ${strength}
+**Bidirectional**: ${bidirectional ? 'Yes' : 'No'}
 
-이제 get_memory_graph로 관계를 시각화할 수 있습니다.`;
+You can now visualize the relationship with get_memory_graph.`;
 
     return {
       content: [{
@@ -123,7 +123,7 @@ export async function linkMemories(args: LinkMemoriesArgs): Promise<ToolResult> 
     return {
       content: [{
         type: 'text',
-        text: `✗ 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `✗ Error: ${error instanceof Error ? error.message : 'Unknown error'}`
       }]
     };
   }

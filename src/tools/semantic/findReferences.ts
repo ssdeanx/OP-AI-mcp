@@ -1,11 +1,13 @@
 // Semantic code analysis tool - Find References (v1.3)
 // With ProjectCache for 25x performance improvement
 
-import { Node, ReferencedSymbol } from 'ts-morph';
-import * as path from 'path';
+import { Node } from 'ts-morph';
+import type { ReferencedSymbol } from 'ts-morph';
+import path from 'node:path';
 import { PythonParser } from '../../lib/PythonParser.js';
 import { ProjectCache } from '../../lib/ProjectCache.js';
 import { readFile } from 'fs/promises';
+import fastGlob from 'fast-glob';
 import { ToolResult, ToolDefinition } from '../../types/tool.js';
 
 interface ReferenceInfo {
@@ -18,7 +20,7 @@ interface ReferenceInfo {
 
 export const findReferencesDefinition: ToolDefinition = {
   name: 'find_references',
-  description: '어디서 쓰|참조|사용처|find usage|references|where used - Find symbol references',
+  description: 'find usage|references|where used - Find symbol references',
   inputSchema: {
     type: 'object',
     properties: {
@@ -54,27 +56,55 @@ export async function findReferences(args: {
 
     const allReferences: ReferenceInfo[] = [];
 
-    // Check for Python files
-    const glob = await import('glob');
-    const pythonFiles = glob.globSync(path.join(projectPath, '**/*.py'), {
+    // Check for Python files using fast-glob for performance
+    const pythonFiles = await fastGlob(['**/*.py'], {
+      cwd: projectPath,
+      absolute: true,
       ignore: ['**/node_modules/**', '**/.git/**', '**/venv/**', '**/__pycache__/**']
     });
 
-    // Parse Python files for references
+    // Parse Python files for references using PythonParser for accuracy
     for (const pyFile of pythonFiles) {
       try {
         const content = await readFile(pyFile, 'utf-8');
         const lines = content.split('\n');
 
-        lines.forEach((line, index) => {
-          if (line.includes(symbolName)) {
-            const column = line.indexOf(symbolName);
+        // Get symbols from PythonParser (fast-path used internally)
+        const symbols = await PythonParser.findSymbols(content);
+        const symbolsByName = new Map<string, Array<{ line: number; kind: string }>>();
+        for (const s of symbols) {
+          if (!symbolsByName.has(s.name)) symbolsByName.set(s.name, []);
+          symbolsByName.get(s.name)!.push({ line: s.line, kind: s.kind });
+        }
+
+        // Scan lines for the symbolName with word boundaries
+        const wordRe = new RegExp(`\\b${symbolName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`);
+        lines.forEach((lineText, index) => {
+          if (wordRe.test(lineText)) {
+            const column = lineText.search(wordRe);
+            const lineNum = index + 1;
+
+            // Determine if this line hosts a definition using parsed symbols
+            let isDef = false;
+            const syms = symbolsByName.get(symbolName) || [];
+            for (const s of syms) {
+              if (s.line === lineNum && (s.kind === 'function' || s.kind === 'class')) {
+                isDef = true;
+                break;
+              }
+            }
+
+            // If not found among parsed definitions, fallback to heuristic
+            if (!isDef && /^(\s*)(def|class)\s+/.test(lineText)) {
+              isDef = true;
+            }
+
             allReferences.push({
               filePath: pyFile,
-              line: index + 1,
+              line: lineNum,
               column: column,
-              text: line.trim().substring(0, 100),
-              isDefinition: /^(def|class)\s/.test(line.trim())
+              text: lineText.trim().substring(0, 200),
+              isDefinition: isDef
             });
           }
         });
@@ -93,16 +123,17 @@ export async function findReferences(args: {
         if (node) {
           const symbol = node.getSymbol();
           if (symbol) {
-            const references = project.getLanguageService().findReferencesAtPosition(sourceFile, position);
-            
+            // Use the ts-morph ReferencedSymbol type so the import is actually used
+            const references = project.getLanguageService().findReferencesAtPosition(sourceFile, position) as ReferencedSymbol[] | undefined;
+
             if (references) {
-              for (const ref of references) {
+              for (const ref of references as ReferencedSymbol[]) {
                 for (const reference of ref.getReferences()) {
                   const refSourceFile = reference.getSourceFile();
                   const refNode = reference.getNode();
                   const start = refNode.getStartLinePos();
                   const pos = refSourceFile.getLineAndColumnAtPos(start);
-                  
+
                   allReferences.push({
                     filePath: refSourceFile.getFilePath(),
                     line: pos.line,
