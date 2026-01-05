@@ -1,0 +1,73 @@
+{
+  "$schema": "https://smithery.ai/schema/smithery.json",
+  "name": "@su-record/hi-ai",
+  "displayName": "Hi-AI",
+  "description": "AI development assistant with 35 specialized tools for code analysis, knowledge graph memory, session context auto-injection, and project planning",
+  "version": "2.1.0",
+  "author": "Su",
+  "license": "MIT",
+  "homepage": "https://github.com/su-record/hi-ai",
+  "repository": "https://github.com/su-record/hi-ai",
+  "icon": "https://raw.githubusercontent.com/su-record/hi-ai/main/icon.png",
+  "readme": "https://github.com/su-record/hi-ai/blob/main/README.md",
+  "categories": [
+    "development",
+    "ai-collaboration",
+    "memory-management",
+    "code-quality",
+    "browser-automation",
+    "sequential-thinking",
+    "planning-tools",
+    "productivity"
+  ],
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "memoryEnabled": {
+        "type": "boolean",
+        "description": "Enable persistent memory storage",
+        "default": true
+      },
+      "browserPath": {
+        "type": "string",
+        "description": "Custom Chrome/Chromium browser path for browser tools"
+      },
+      "maxMemoryItems": {
+        "type": "number",
+        "description": "Maximum number of memory items to store",
+        "default": 1000
+      }
+    },
+    "required": []
+  },
+  "startCommand": {
+    "type": "stdio",
+    "configSchema": {
+      "type": "object",
+      "properties": {
+        "memoryEnabled": {
+          "type": "boolean",
+          "description": "Enable persistent memory storage",
+          "default": true
+        },
+        "browserPath": {
+          "type": "string",
+          "description": "Custom Chrome/Chromium browser path for browser tools"
+        },
+        "maxMemoryItems": {
+          "type": "number",
+          "description": "Maximum number of memory items to store",
+          "default": 1000
+        }
+      },
+      "required": []
+    },
+    "command": "node",
+    "args": ["dist/index.js"]
+  }
+}

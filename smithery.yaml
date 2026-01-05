@@ -1,0 +1,46 @@
+name: "@su-record/hi-ai"
+description: "AI 어렵지 않아! '하이아이' - 지식 그래프 기반 35개 도구의 완벽한 AI 개발 킷 (세션 컨텍스트 자동 주입)"
+version: "2.1.0"
+author: "Su"
+license: "MIT"
+categories:
+  - development
+  - ai-collaboration
+  - memory-management
+  - code-quality
+  - code-analysis
+  - sequential-thinking
+  - planning-tools
+  - productivity
+runtime: "typescript"
+main: "src/index.ts"
+build:
+  script: "npm run build"
+  output: "dist/index.js"
+env:
+  NODE_ENV: "production"
+homepage: "https://github.com/su-record/hi-ai"
+repository: "https://github.com/su-record/hi-ai"
+readme: "https://github.com/su-record/hi-ai/main/README.md"
+icon: "https://raw.githubusercontent.com/su-record/hi-ai/main/icon.png"
+capabilities:
+  tools: true
+  resources: true
+  prompts: true
+config:
+  requires_api_key: false
+  schema:
+    type: "object"
+    properties:
+      sessionId:
+        type: "string"
+        description: "Unique session identifier for context management"
+      enableAutoSave:
+        type: "boolean"
+        description: "Automatically save session context"
+        default: true
+      defaultPriority:
+        type: "string"
+        enum: ["low", "medium", "high", "critical"]
+        description: "Default priority level for tasks"
+        default: "medium"
