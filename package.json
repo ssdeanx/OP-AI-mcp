@@ -20,7 +20,9 @@
     "op-ai": "dist/index.js"
   },
   "scripts": {
-    "dev": "npm run build && node dist/index.js",
+    "dev": "concurrently \"npm run smithery:dev\" \"npm run build && node dist/index.js\"",
+    "smithery:dev": "npx smithery dev --no-tunnel",
+    "smithery:build": "npx smithery build",
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -52,7 +54,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1",
-    "@smithery/sdk": "^2.1.0",
+    "@smithery/sdk": "^4.0.0",
     "@tensorflow-models/universal-sentence-encoder": "^1.3.3",
     "@tensorflow/tfjs-node": "^4.22.0",
     "@types/better-sqlite3": "^7.6.13",
@@ -66,10 +68,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@smithery/cli": "^2.0.1",
     "@types/node": "^22.19.3",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",
     "@vitest/ui": "^4.0.16",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0",
